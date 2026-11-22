@@ -99,7 +99,7 @@ class FederatedOrchestrator:
 
         # Attack configuration
         self.attack_enabled = config.get("attack_enabled", False)
-        self.malicious_client_ids: List[int] = config.get("malicious_client_ids", [3])
+        self.malicious_client_ids: List[int] = config.get("malicious_client_ids", [3]) if self.attack_enabled else []
         self.attack_type = config.get("attack_type", "gaussian_noise")
         self.label_flip_source = config.get("label_flip_source", 1)
         self.label_flip_target = config.get("label_flip_target", 0)

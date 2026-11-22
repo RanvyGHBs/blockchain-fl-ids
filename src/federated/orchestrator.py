@@ -117,15 +117,16 @@ class FederatedOrchestrator:
         assert self.X_train is not None, "X_train must be provided in config or loadable via track/loader."
         assert self.X_test is not None, "X_test must be provided in config or loadable via track/loader."
 
+        # Establish deterministic class-to-index mapping from training targets
+        self._normalize_target_labels()
+
+        # Strict 3-Way Isolation: derive fallback validation benchmark from X_train
+        # BEFORE client partitioning, ensuring validation and client training sets are disjoint.
+        self._val_data_prepared = False
+        self.val_data: Optional[Tuple[np.ndarray, np.ndarray]] = None
+        self._prepare_validation_data()
+
         self.input_dim = config.get("input_dim", self.X_train.shape[1])
-        if "num_classes" in config and config["num_classes"] is not None:
-            self.num_classes = int(config["num_classes"])
-        else:
-            all_y = [y for y in (self.y_train, self.y_val, self.y_test) if y is not None]
-            if all_y:
-                self.num_classes = max(2, int(len(np.unique(np.concatenate(all_y)))))
-            else:
-                self.num_classes = 2
 
         # Trust engine thresholds
         trust_cfg = config.get("trust_config", {})
@@ -146,6 +147,92 @@ class FederatedOrchestrator:
         self.round_logs: List[Dict[str, Any]] = []
         self.dp_accounting: List[Dict[str, Any]] = []
         self.attack_log: List[Dict[str, Any]] = []
+
+    @staticmethod
+    def _map_label_array(labels: np.ndarray, mapping: Dict[Any, int], split_name: str) -> np.ndarray:
+        unseen = [val for val in labels if val not in mapping]
+        if unseen:
+            unique_unseen = sorted(list(set(unseen)), key=lambda x: (str(type(x)), x))
+            clean_unseen = [x.item() if hasattr(x, "item") else x for x in unique_unseen]
+            clean_vocab = [x.item() if hasattr(x, "item") else x for x in mapping.keys()]
+            raise ValueError(
+                f"Unseen label(s) {clean_unseen} encountered in {split_name} set. "
+                f"Expected labels from training vocabulary: {clean_vocab}"
+            )
+        return np.array([mapping[val] for val in labels], dtype=np.int64)
+
+    def _normalize_target_labels(self):
+        """
+        Establishes one consistent class-to-index mapping (0..C-1) from the training label vocabulary.
+        Transforms training, validation, and test targets using this single mapping.
+        Rejects unseen validation or test labels with a descriptive ValueError.
+        Preserves human-readable class names for reporting.
+        """
+        unique_train = np.unique(self.y_train)
+        is_already_contiguous = (
+            np.issubdtype(self.y_train.dtype, np.integer) and
+            set(unique_train) == set(range(len(unique_train)))
+        )
+
+        if is_already_contiguous:
+            mapping = {int(c): int(c) for c in range(len(unique_train))}
+            if not self.class_names:
+                self.class_names = [str(c) for c in range(len(unique_train))]
+        else:
+            sorted_classes = sorted(list(unique_train), key=lambda x: (str(type(x)), x))
+            mapping = {cls: idx for idx, cls in enumerate(sorted_classes)}
+            self.class_names = [str(c) for c in sorted_classes]
+            self.y_train = self._map_label_array(self.y_train, mapping, "training")
+
+        if self.y_val is not None:
+            self.y_val = self._map_label_array(self.y_val, mapping, "validation")
+
+        if self.y_test is not None:
+            self.y_test = self._map_label_array(self.y_test, mapping, "test")
+
+        if "num_classes" in self.config and self.config["num_classes"] is not None:
+            self.num_classes = max(int(self.config["num_classes"]), len(mapping))
+        else:
+            self.num_classes = max(2, len(mapping))
+
+    def _prepare_validation_data(self):
+        """
+        Prepares validation benchmark ensuring strict 3-way research isolation.
+        When raw arrays are passed without X_val, extracts a dedicated validation slice
+        from X_train and removes those samples from the client-training pool BEFORE
+        partitioning.
+        """
+        if self._val_data_prepared:
+            return
+
+        if self.X_val is not None and self.y_val is not None:
+            self.val_data = (self.X_val, self.y_val)
+        elif self.config.get("val_data") is not None:
+            self.val_data = self.config["val_data"]
+            self.X_val, self.y_val = self.val_data
+        else:
+            # Fallback: slice validation benchmark from X_train
+            n_train = len(self.X_train)
+            if n_train > 1:
+                desired_val = min(1000, max(1, n_train // 10))
+                val_size = min(desired_val, n_train - 1)
+                rng = np.random.RandomState(self.seed)
+                all_idx = np.arange(n_train)
+                val_idx = rng.choice(all_idx, size=val_size, replace=False)
+                pool_idx = np.setdiff1d(all_idx, val_idx)
+
+                self.X_val = self.X_train[val_idx]
+                self.y_val = self.y_train[val_idx]
+                self.X_train = self.X_train[pool_idx]
+                self.y_train = self.y_train[pool_idx]
+                self.val_data = (self.X_val, self.y_val)
+            else:
+                # N == 1 edge case: keep in training pool and mirror reference for validation
+                self.X_val = self.X_train.copy()
+                self.y_val = self.y_train.copy()
+                self.val_data = (self.X_val, self.y_val)
+
+        self._val_data_prepared = True
 
     def _load_dataset_from_track_or_loader(self):
         """Loads and preprocesses datasets with strict 3-way isolation based on track/loader configuration."""
@@ -179,6 +266,12 @@ class FederatedOrchestrator:
     # ------------------------------------------------------------------
 
     def _setup_clients(self):
+        # Ensure validation benchmark is isolated before partitioning client-training pool
+        self._prepare_validation_data()
+
+        # Clear previous setup-phase attack logs to prevent duplicates on repeated setup()
+        self.attack_log = [e for e in self.attack_log if e.get("phase") != "setup"]
+
         partitioner = FederatedPartitioner(
             num_clients=self.num_clients, non_iid=True, alpha=0.5, seed=self.seed
         )
@@ -190,7 +283,10 @@ class FederatedOrchestrator:
         for cid in range(self.num_clients):
             Xc, yc = splits[cid]
 
-            # Data poisoning (label flip) applied at data-loading time
+            # Data poisoning (label flip) applied at data-loading time.
+            # Label-flipping is a data-poisoning attack that permanently poisons
+            # the client's local training dataset once during client setup (Phase: "setup", Round: 0).
+            # It takes effect in every subsequent local training epoch on that client.
             if (self.attack_enabled
                     and cid in self.malicious_client_ids
                     and self.attack_type == "label_flip"):
@@ -200,10 +296,27 @@ class FederatedOrchestrator:
                 if src_cls not in yc and len(yc) > 0:
                     src_cls = int(yc[0])
                     tgt_cls = (src_cls + 1) % self.num_classes
+
+                # Calculate actual source-class sample count modified by the attack
+                source_indices = np.where(yc == src_cls)[0]
+                flipped_count = len(source_indices)
+
                 yc = apply_label_flipping_attack(
                     yc, source_class=src_cls, target_class=tgt_cls, flip_ratio=1.0, seed=self.seed
                 )
-                print(f"  [Attack Setup] Label-Flip injected on Client {cid}: {src_cls} -> {tgt_cls}")
+                print(f"  [Attack Setup] Label-Flip injected on Client {cid}: {src_cls} -> {tgt_cls} ({flipped_count} samples)")
+
+                # Telemetry logging: record only if samples were actually modified
+                if flipped_count > 0:
+                    self.attack_log.append({
+                        "round": 0,
+                        "phase": "setup",
+                        "client_id": cid,
+                        "attack_type": "label_flip",
+                        "source_class": int(src_cls),
+                        "target_class": int(tgt_cls),
+                        "flipped_samples": int(flipped_count)
+                    })
 
             client = FederatedClient(
                 client_id=cid,
@@ -445,18 +558,8 @@ class FederatedOrchestrator:
 
         self.setup()
 
-        # Strict 3-Way Isolation: determine trust validation benchmark
-        if self.X_val is not None and self.y_val is not None:
-            val_data = (self.X_val, self.y_val)
-        elif self.config.get("val_data") is not None:
-            val_data = self.config["val_data"]
-        else:
-            # Fallback: slice from X_train without leaking held-out test data
-            val_size = min(1000, max(1, len(self.X_train) // 10))
-            val_indices = np.random.RandomState(self.seed).choice(
-                len(self.X_train), size=val_size, replace=False
-            )
-            val_data = (self.X_train[val_indices], self.y_train[val_indices])
+        # Strict 3-Way Isolation: retrieve prepared validation benchmark
+        val_data = self.val_data
 
         # Round 0 — initial evaluation (untrained global model)
         eval_bs = min(self.batch_size, len(self.X_test)) if len(self.X_test) > 0 else 32

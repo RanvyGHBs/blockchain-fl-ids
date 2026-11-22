@@ -157,7 +157,7 @@ class FederatedServer:
         prec_macro = precision_score(all_targets, all_preds, average="macro", zero_division=0)
         rec_macro = recall_score(all_targets, all_preds, average="macro", zero_division=0)
         f1_macro = f1_score(all_targets, all_preds, average="macro", zero_division=0)
-        cm = confusion_matrix(all_targets, all_preds).tolist()
+        cm = confusion_matrix(all_targets, all_preds, labels=list(range(self.num_classes))).tolist()
 
         eval_result = {
             "round": self.current_round,

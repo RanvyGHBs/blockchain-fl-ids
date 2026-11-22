@@ -1,0 +1,1554 @@
+{
+  "s1_honest_fedavg": {
+    "scenario_name": "S1 \u2013 Vanilla FedAvg (Honest Baseline)",
+    "config": {
+      "scenario_name": "S1 \u2013 Vanilla FedAvg (Honest Baseline)",
+      "seed": 42,
+      "device": "cpu",
+      "num_clients": 5,
+      "num_rounds": 5,
+      "local_epochs": 1,
+      "batch_size": 128,
+      "lr": 0.002,
+      "fedprox_mu": 0.0,
+      "aggregation_algorithm": "fedavg",
+      "attack_enabled": false,
+      "malicious_client_ids": [
+        3
+      ],
+      "attack_type": "gaussian_noise",
+      "defense_enabled": false,
+      "dp_enabled": false,
+      "dp_clip_norm": 1.0,
+      "dp_noise_multiplier": 0.01,
+      "trust_config": {
+        "norm_threshold_factor": 2.5,
+        "cosine_threshold": 0.15,
+        "loss_increase_threshold": 1.5
+      }
+    },
+    "final_accuracy": 0.5829045422285308,
+    "final_f1_score": 0.4986091765926359,
+    "final_precision": 0.5781401882824783,
+    "final_recall": 0.5829045422285308,
+    "final_loss": 0.5910062957436079,
+    "total_time_sec": 38.39925718307495,
+    "round_history": [
+      {
+        "round": 0,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.7010880033118747,
+        "num_active_clients": 0,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "f1bf2b55fe63505af9a08bd29bdde755eec492f56bcccf3f1d61d29d3435cedf",
+        "blockchain_height": 1,
+        "duration_sec": 0.0
+      },
+      {
+        "round": 1,
+        "accuracy": 0.6951295244854506,
+        "precision": 0.693910574891879,
+        "recall": 0.6951295244854506,
+        "f1_score": 0.6881735252689217,
+        "loss": 0.6412663292258746,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "e3fc08007c60f9fa42fddaa54b63f25588e6de2262a24e2068f08182a8d9e636",
+        "blockchain_height": 1,
+        "duration_sec": 12.590931415557861
+      },
+      {
+        "round": 2,
+        "accuracy": 0.5750532292405962,
+        "precision": 0.558303569637625,
+        "recall": 0.5750532292405962,
+        "f1_score": 0.4893880919977212,
+        "loss": 0.6357902886598478,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "61cb5e4ba787a9b327212b735fbfa965d7c218e01bcbfa8663abf5504bec4d79",
+        "blockchain_height": 1,
+        "duration_sec": 6.406345367431641
+      },
+      {
+        "round": 3,
+        "accuracy": 0.5867193044712562,
+        "precision": 0.586884177543309,
+        "recall": 0.5867193044712562,
+        "f1_score": 0.5045940938336859,
+        "loss": 0.6087116614734983,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "73f5fa770c6a85d89a84549d0f66fe03bf1847d8b0279ab1fa478b00ca08e9ee",
+        "blockchain_height": 1,
+        "duration_sec": 6.226651668548584
+      },
+      {
+        "round": 4,
+        "accuracy": 0.5681334279630944,
+        "precision": 0.5304998988173951,
+        "recall": 0.5681334279630944,
+        "f1_score": 0.432535783350437,
+        "loss": 0.5979830651861966,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "11da2c870de87722f11013887b68f9cf15b33f43f89506ecbc88e212ad1bedd7",
+        "blockchain_height": 1,
+        "duration_sec": 7.068699598312378
+      },
+      {
+        "round": 5,
+        "accuracy": 0.5829045422285308,
+        "precision": 0.5781401882824783,
+        "recall": 0.5829045422285308,
+        "f1_score": 0.4986091765926359,
+        "loss": 0.5910062957436079,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "176d41bbcc991052fc2006ea49f7cfc42e8cb0fef46a32e651de1c24d470f175",
+        "blockchain_height": 1,
+        "duration_sec": 6.102911949157715
+      }
+    ],
+    "attack_log": [],
+    "dp_accounting": [],
+    "blockchain_summary": {
+      "total_blocks": 1,
+      "total_transactions": 0,
+      "accepted_transactions": 0,
+      "rejected_attacks": 0,
+      "is_chain_valid": true
+    },
+    "reputation_summary": {
+      "reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0
+      },
+      "quarantined_clients": [],
+      "active_clients": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "history": {
+        "0": [
+          1.0
+        ],
+        "1": [
+          1.0
+        ],
+        "2": [
+          1.0
+        ],
+        "3": [
+          1.0
+        ],
+        "4": [
+          1.0
+        ]
+      }
+    },
+    "chain_valid": true,
+    "xai_demo": null
+  },
+  "s2_poisoned_no_defense": {
+    "scenario_name": "S2 \u2013 Vanilla FedAvg Under Gaussian Noise Attack (No Defense)",
+    "config": {
+      "scenario_name": "S2 \u2013 Vanilla FedAvg Under Gaussian Noise Attack (No Defense)",
+      "seed": 42,
+      "device": "cpu",
+      "num_clients": 5,
+      "num_rounds": 5,
+      "local_epochs": 1,
+      "batch_size": 128,
+      "lr": 0.002,
+      "fedprox_mu": 0.0,
+      "aggregation_algorithm": "fedavg",
+      "attack_enabled": true,
+      "malicious_client_ids": [
+        3
+      ],
+      "attack_type": "gaussian_noise",
+      "defense_enabled": false,
+      "dp_enabled": false,
+      "dp_clip_norm": 1.0,
+      "dp_noise_multiplier": 0.01,
+      "trust_config": {
+        "norm_threshold_factor": 2.5,
+        "cosine_threshold": 0.15,
+        "loss_increase_threshold": 1.5
+      }
+    },
+    "final_accuracy": 0.7503105039034776,
+    "final_f1_score": 0.7330400468986961,
+    "final_precision": 0.7811306366901031,
+    "final_recall": 0.7503105039034776,
+    "final_loss": 238.12524946874723,
+    "total_time_sec": 35.58788323402405,
+    "round_history": [
+      {
+        "round": 0,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.7032306586452373,
+        "num_active_clients": 0,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "480fa203d47b00462de9be0ec40cfff55a29a780a7eab71ada75b473f2642635",
+        "blockchain_height": 1,
+        "duration_sec": 0.0
+      },
+      {
+        "round": 1,
+        "accuracy": 0.28739354151880764,
+        "precision": 0.2960855613999555,
+        "recall": 0.28739354151880764,
+        "f1_score": 0.2907571943011143,
+        "loss": 19.109330458197718,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "663ce456a0234ace96f6a7cd4d1ac1bfec339a6c21833378132b0504fc4679ed",
+        "blockchain_height": 1,
+        "duration_sec": 6.888256311416626
+      },
+      {
+        "round": 2,
+        "accuracy": 0.705597941802697,
+        "precision": 0.7313095150827976,
+        "recall": 0.705597941802697,
+        "f1_score": 0.6820100980211394,
+        "loss": 6.2665833472528725,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "3a9bad4c3d1e8c37559965bb9e980dfbc6b3d68c85b553fdb6ec0cd150663998",
+        "blockchain_height": 1,
+        "duration_sec": 6.73998761177063
+      },
+      {
+        "round": 3,
+        "accuracy": 0.568665720369056,
+        "precision": 0.427298156645326,
+        "recall": 0.568665720369056,
+        "f1_score": 0.4131962195078262,
+        "loss": 220.2386054965602,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "5b391e37d4348397fbb05b15fb0e020a69f9270939d923a15294ea61dc27ce7e",
+        "blockchain_height": 1,
+        "duration_sec": 7.0655763149261475
+      },
+      {
+        "round": 4,
+        "accuracy": 0.6557398864442867,
+        "precision": 0.7184041712222692,
+        "recall": 0.6557398864442867,
+        "f1_score": 0.5988402260778038,
+        "loss": 129.2642197943986,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "374c632b0949c028d057ede72f03d70ac39759db8ae7c6fbac4cc873c3058d30",
+        "blockchain_height": 1,
+        "duration_sec": 8.246668577194214
+      },
+      {
+        "round": 5,
+        "accuracy": 0.7503105039034776,
+        "precision": 0.7811306366901031,
+        "recall": 0.7503105039034776,
+        "f1_score": 0.7330400468986961,
+        "loss": 238.12524946874723,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "21d760c53e610df99a74aad660d9496e2742a278499c957ae230a4f34bf3683b",
+        "blockchain_height": 1,
+        "duration_sec": 6.642956733703613
+      }
+    ],
+    "attack_log": [
+      {
+        "round": 1,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      },
+      {
+        "round": 2,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      },
+      {
+        "round": 3,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      },
+      {
+        "round": 4,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      },
+      {
+        "round": 5,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      }
+    ],
+    "dp_accounting": [],
+    "blockchain_summary": {
+      "total_blocks": 1,
+      "total_transactions": 0,
+      "accepted_transactions": 0,
+      "rejected_attacks": 0,
+      "is_chain_valid": true
+    },
+    "reputation_summary": {
+      "reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0
+      },
+      "quarantined_clients": [],
+      "active_clients": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "history": {
+        "0": [
+          1.0
+        ],
+        "1": [
+          1.0
+        ],
+        "2": [
+          1.0
+        ],
+        "3": [
+          1.0
+        ],
+        "4": [
+          1.0
+        ]
+      }
+    },
+    "chain_valid": true,
+    "xai_demo": null
+  },
+  "s3_signflip_no_defense": {
+    "scenario_name": "S3 \u2013 Vanilla FedAvg Under Sign-Flip Attack (No Defense)",
+    "config": {
+      "scenario_name": "S3 \u2013 Vanilla FedAvg Under Sign-Flip Attack (No Defense)",
+      "seed": 42,
+      "device": "cpu",
+      "num_clients": 5,
+      "num_rounds": 5,
+      "local_epochs": 1,
+      "batch_size": 128,
+      "lr": 0.002,
+      "fedprox_mu": 0.0,
+      "aggregation_algorithm": "fedavg",
+      "attack_enabled": true,
+      "malicious_client_ids": [
+        3
+      ],
+      "attack_type": "sign_flip",
+      "defense_enabled": false,
+      "dp_enabled": false,
+      "dp_clip_norm": 1.0,
+      "dp_noise_multiplier": 0.01,
+      "trust_config": {
+        "norm_threshold_factor": 2.5,
+        "cosine_threshold": 0.15,
+        "loss_increase_threshold": 1.5
+      }
+    },
+    "final_accuracy": 0.43075762952448543,
+    "final_f1_score": 0.2593760558246646,
+    "final_precision": 0.18555213539355384,
+    "final_recall": 0.43075762952448543,
+    "final_loss": 1.0064302546238544,
+    "total_time_sec": 35.78842782974243,
+    "round_history": [
+      {
+        "round": 0,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.7147396727603238,
+        "num_active_clients": 0,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "1ca0bafc823f6661c6a65de4025ca23e333205fb64647d8a48333924986939fb",
+        "blockchain_height": 1,
+        "duration_sec": 0.0
+      },
+      {
+        "round": 1,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.7907698537712828,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "17ca1904a3fd5321b2bc327b9aef2b3a0f128672841503bdd3f4d5aea1f36806",
+        "blockchain_height": 1,
+        "duration_sec": 7.962652206420898
+      },
+      {
+        "round": 2,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.8561942536328345,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "fb160378457500b35750da1b786ed4699a0245ea86f222751ee9825b2cfd7689",
+        "blockchain_height": 1,
+        "duration_sec": 7.251728057861328
+      },
+      {
+        "round": 3,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.966920798767366,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "a896a834205e1a8e48a5d3512bee7b32b43e66de399231ac6436976bbd02adac",
+        "blockchain_height": 1,
+        "duration_sec": 6.513871192932129
+      },
+      {
+        "round": 4,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.9788722000365735,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "ba8263707e856430ae8b6c4aa285920df41341f35715a5fd53824664cda22645",
+        "blockchain_height": 1,
+        "duration_sec": 7.05340313911438
+      },
+      {
+        "round": 5,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 1.0064302546238544,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "5a1296fd4ae77b8341c67d336113487434e793d7e1ab7a2738f1e93e2bdb5040",
+        "blockchain_height": 1,
+        "duration_sec": 7.001751899719238
+      }
+    ],
+    "attack_log": [
+      {
+        "round": 1,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      },
+      {
+        "round": 2,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      },
+      {
+        "round": 3,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      },
+      {
+        "round": 4,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      },
+      {
+        "round": 5,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      }
+    ],
+    "dp_accounting": [],
+    "blockchain_summary": {
+      "total_blocks": 1,
+      "total_transactions": 0,
+      "accepted_transactions": 0,
+      "rejected_attacks": 0,
+      "is_chain_valid": true
+    },
+    "reputation_summary": {
+      "reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0
+      },
+      "quarantined_clients": [],
+      "active_clients": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "history": {
+        "0": [
+          1.0
+        ],
+        "1": [
+          1.0
+        ],
+        "2": [
+          1.0
+        ],
+        "3": [
+          1.0
+        ],
+        "4": [
+          1.0
+        ]
+      }
+    },
+    "chain_valid": true,
+    "xai_demo": null
+  },
+  "s4_blockchain_gaussian_defense": {
+    "scenario_name": "S4 \u2013 Blockchain-Assisted FL Under Gaussian Attack (Proposed Framework)",
+    "config": {
+      "scenario_name": "S4 \u2013 Blockchain-Assisted FL Under Gaussian Attack (Proposed Framework)",
+      "seed": 42,
+      "device": "cpu",
+      "num_clients": 5,
+      "num_rounds": 5,
+      "local_epochs": 1,
+      "batch_size": 128,
+      "lr": 0.002,
+      "fedprox_mu": 0.0,
+      "aggregation_algorithm": "trust_weighted",
+      "attack_enabled": true,
+      "malicious_client_ids": [
+        3
+      ],
+      "attack_type": "gaussian_noise",
+      "defense_enabled": true,
+      "dp_enabled": false,
+      "dp_clip_norm": 1.0,
+      "dp_noise_multiplier": 0.01,
+      "trust_config": {
+        "norm_threshold_factor": 2.5,
+        "cosine_threshold": 0.15,
+        "loss_increase_threshold": 1.5
+      }
+    },
+    "final_accuracy": 0.709457061745919,
+    "final_f1_score": 0.6985718097136309,
+    "final_precision": 0.8108083906096577,
+    "final_recall": 0.709457061745919,
+    "final_loss": 0.5840480469743609,
+    "total_time_sec": 30.82461404800415,
+    "round_history": [
+      {
+        "round": 0,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6852622603253323,
+        "num_active_clients": 0,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "82b773c064b6e5aedb10294ca8bd442a8d9485f6d93904911b2cfc877ed91eca",
+        "blockchain_height": 1,
+        "duration_sec": 0.0
+      },
+      {
+        "round": 1,
+        "accuracy": 0.6939318665720369,
+        "precision": 0.8048699186470665,
+        "recall": 0.6939318665720369,
+        "f1_score": 0.6802669115923007,
+        "loss": 0.6099671675771411,
+        "num_active_clients": 4,
+        "rejected_client_ids": [
+          3
+        ],
+        "num_rejected": 1,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.65,
+          "4": 1.0
+        },
+        "global_weights_hash": "35cfaee92724c277f5b0f3dbfbf8b217ce3c042049c8b67ab8d28a68827212b0",
+        "blockchain_height": 2,
+        "duration_sec": 7.805809736251831
+      },
+      {
+        "round": 2,
+        "accuracy": 0.7009403832505323,
+        "precision": 0.8067614739045635,
+        "recall": 0.7009403832505323,
+        "f1_score": 0.6886972303939748,
+        "loss": 0.5935530777177208,
+        "num_active_clients": 4,
+        "rejected_client_ids": [
+          3
+        ],
+        "num_rejected": 1,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "cb01b8526361dd0c51d0b4d3680c7b28db09ce7beb2d9ee902acdc5dc850a6b8",
+        "blockchain_height": 3,
+        "duration_sec": 6.479680061340332
+      },
+      {
+        "round": 3,
+        "accuracy": 0.7186834634492548,
+        "precision": 0.8126024661852244,
+        "recall": 0.7186834634492548,
+        "f1_score": 0.7095210111373081,
+        "loss": 0.5480232895308983,
+        "num_active_clients": 4,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "6b2e8dfdf8f978255267773e6552f7f75eebfdfa22dc9d81ff0ab1a9457e07cd",
+        "blockchain_height": 4,
+        "duration_sec": 5.673120975494385
+      },
+      {
+        "round": 4,
+        "accuracy": 0.7119410929737402,
+        "precision": 0.8100975894640683,
+        "recall": 0.7119410929737402,
+        "f1_score": 0.7017073485600995,
+        "loss": 0.5725998482524799,
+        "num_active_clients": 4,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "348aedf22f2a0c8e90aa173189b3f28237dafa80d50290579a6a0945e597193e",
+        "blockchain_height": 5,
+        "duration_sec": 5.604657173156738
+      },
+      {
+        "round": 5,
+        "accuracy": 0.709457061745919,
+        "precision": 0.8108083906096577,
+        "recall": 0.709457061745919,
+        "f1_score": 0.6985718097136309,
+        "loss": 0.5840480469743609,
+        "num_active_clients": 4,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "3ceec6fd34d6c55732afd421c525fdf0d05647b51d7634df5a76b16a55b5d0d7",
+        "blockchain_height": 6,
+        "duration_sec": 5.257497549057007
+      }
+    ],
+    "attack_log": [
+      {
+        "round": 1,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      },
+      {
+        "round": 2,
+        "client_id": 3,
+        "attack_type": "gaussian_noise"
+      }
+    ],
+    "dp_accounting": [],
+    "blockchain_summary": {
+      "total_blocks": 6,
+      "total_transactions": 22,
+      "accepted_transactions": 20,
+      "rejected_attacks": 2,
+      "is_chain_valid": true
+    },
+    "reputation_summary": {
+      "reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.3,
+        "4": 1.0
+      },
+      "quarantined_clients": [
+        3
+      ],
+      "active_clients": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "history": {
+        "0": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "1": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "2": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "3": [
+          1.0,
+          0.65,
+          0.3
+        ],
+        "4": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "chain_valid": true,
+    "xai_demo": null
+  },
+  "s5_blockchain_signflip_defense": {
+    "scenario_name": "S5 \u2013 Blockchain-Assisted FL Under Sign-Flip Attack (Proposed Framework)",
+    "config": {
+      "scenario_name": "S5 \u2013 Blockchain-Assisted FL Under Sign-Flip Attack (Proposed Framework)",
+      "seed": 42,
+      "device": "cpu",
+      "num_clients": 5,
+      "num_rounds": 5,
+      "local_epochs": 1,
+      "batch_size": 128,
+      "lr": 0.002,
+      "fedprox_mu": 0.0,
+      "aggregation_algorithm": "trust_weighted",
+      "attack_enabled": true,
+      "malicious_client_ids": [
+        3
+      ],
+      "attack_type": "sign_flip",
+      "defense_enabled": true,
+      "dp_enabled": false,
+      "dp_clip_norm": 1.0,
+      "dp_noise_multiplier": 0.01,
+      "trust_config": {
+        "norm_threshold_factor": 2.5,
+        "cosine_threshold": 0.15,
+        "loss_increase_threshold": 1.5
+      }
+    },
+    "final_accuracy": 0.745874733853797,
+    "final_f1_score": 0.743321201665854,
+    "final_precision": 0.7982852785053614,
+    "final_recall": 0.745874733853797,
+    "final_loss": 0.572321912893765,
+    "total_time_sec": 32.40938591957092,
+    "round_history": [
+      {
+        "round": 0,
+        "accuracy": 0.43075762952448543,
+        "precision": 0.18555213539355384,
+        "recall": 0.43075762952448543,
+        "f1_score": 0.2593760558246646,
+        "loss": 0.7068732948147548,
+        "num_active_clients": 0,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "99fdc41ef4a1d346b78d7c2d4e1341789cf72247f408308d719dcfbc74fabad1",
+        "blockchain_height": 1,
+        "duration_sec": 0.0
+      },
+      {
+        "round": 1,
+        "accuracy": 0.6996983676366217,
+        "precision": 0.7804378538971072,
+        "recall": 0.6996983676366217,
+        "f1_score": 0.6913198492099116,
+        "loss": 0.6536617190216855,
+        "num_active_clients": 4,
+        "rejected_client_ids": [
+          3
+        ],
+        "num_rejected": 1,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.65,
+          "4": 1.0
+        },
+        "global_weights_hash": "368ae93345e22d4138e0f89f8848569dc36def6a2959de5ebe770660237ad5ee",
+        "blockchain_height": 2,
+        "duration_sec": 7.624886512756348
+      },
+      {
+        "round": 2,
+        "accuracy": 0.7194819020581973,
+        "precision": 0.7845052215968635,
+        "recall": 0.7194819020581973,
+        "f1_score": 0.7144924450987054,
+        "loss": 0.6112247765952599,
+        "num_active_clients": 4,
+        "rejected_client_ids": [
+          3
+        ],
+        "num_rejected": 1,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "049b95a8328d6142a3c7ff9ba1b1ede1f697aab6dfcdf0111913946123003651",
+        "blockchain_height": 3,
+        "duration_sec": 7.36718487739563
+      },
+      {
+        "round": 3,
+        "accuracy": 0.7332771469127041,
+        "precision": 0.7900772377573301,
+        "recall": 0.7332771469127041,
+        "f1_score": 0.7298693722991814,
+        "loss": 0.5979670013325531,
+        "num_active_clients": 4,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "73067417b6a16a43a99ee68569db8d9ec1a61e41e590b8d03afebe674941c97f",
+        "blockchain_height": 4,
+        "duration_sec": 5.725332021713257
+      },
+      {
+        "round": 4,
+        "accuracy": 0.7141146202980837,
+        "precision": 0.7814487425778431,
+        "recall": 0.7141146202980837,
+        "f1_score": 0.7085694450330112,
+        "loss": 0.5916153934511248,
+        "num_active_clients": 4,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "380af41a70ee43bb28d974bd3cf4dea3ac19afe7ef568aeca905ec8e74a7de9a",
+        "blockchain_height": 5,
+        "duration_sec": 6.2439587116241455
+      },
+      {
+        "round": 5,
+        "accuracy": 0.745874733853797,
+        "precision": 0.7982852785053614,
+        "recall": 0.745874733853797,
+        "f1_score": 0.743321201665854,
+        "loss": 0.572321912893765,
+        "num_active_clients": 4,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 0.3,
+          "4": 1.0
+        },
+        "global_weights_hash": "c39cff26a8abb267cd2869cc2e8c876ecb11bff2379a922a8e30ea4792e698af",
+        "blockchain_height": 6,
+        "duration_sec": 5.4432361125946045
+      }
+    ],
+    "attack_log": [
+      {
+        "round": 1,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      },
+      {
+        "round": 2,
+        "client_id": 3,
+        "attack_type": "sign_flip"
+      }
+    ],
+    "dp_accounting": [],
+    "blockchain_summary": {
+      "total_blocks": 6,
+      "total_transactions": 22,
+      "accepted_transactions": 20,
+      "rejected_attacks": 2,
+      "is_chain_valid": true
+    },
+    "reputation_summary": {
+      "reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.3,
+        "4": 1.0
+      },
+      "quarantined_clients": [
+        3
+      ],
+      "active_clients": [
+        0,
+        1,
+        2,
+        4
+      ],
+      "history": {
+        "0": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "1": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "2": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "3": [
+          1.0,
+          0.65,
+          0.3
+        ],
+        "4": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "chain_valid": true,
+    "xai_demo": null
+  },
+  "s6_differential_privacy": {
+    "scenario_name": "S6 \u2013 Privacy-Preserving FL (Local Differential Privacy)",
+    "config": {
+      "scenario_name": "S6 \u2013 Privacy-Preserving FL (Local Differential Privacy)",
+      "seed": 42,
+      "device": "cpu",
+      "num_clients": 5,
+      "num_rounds": 5,
+      "local_epochs": 1,
+      "batch_size": 128,
+      "lr": 0.002,
+      "fedprox_mu": 0.0,
+      "aggregation_algorithm": "fedavg",
+      "attack_enabled": false,
+      "malicious_client_ids": [
+        3
+      ],
+      "attack_type": "gaussian_noise",
+      "defense_enabled": false,
+      "dp_enabled": true,
+      "dp_clip_norm": 1.0,
+      "dp_noise_multiplier": 0.01,
+      "trust_config": {
+        "norm_threshold_factor": 2.5,
+        "cosine_threshold": 0.15,
+        "loss_increase_threshold": 1.5
+      }
+    },
+    "final_accuracy": 0.5692423704755145,
+    "final_f1_score": 0.41298512255489606,
+    "final_precision": 0.32403687634458295,
+    "final_recall": 0.5692423704755145,
+    "final_loss": 0.6920722821572726,
+    "total_time_sec": 37.95297193527222,
+    "round_history": [
+      {
+        "round": 0,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6896148213179422,
+        "num_active_clients": 0,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "0f6cd3b76232a9153044f27a038d755aab65bb77034295523c665435446438a5",
+        "blockchain_height": 1,
+        "duration_sec": 0.0
+      },
+      {
+        "round": 1,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6920785943695296,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "0d012828fa2fdc1037912c542903401c234101de1ba29f3ee4683e23c4e2b285",
+        "blockchain_height": 1,
+        "duration_sec": 7.089756488800049
+      },
+      {
+        "round": 2,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6922710921173827,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "cec2c9eac3ac32491bed5b9c6d1fb36441bd67850147bc2d30643279c79d9d9f",
+        "blockchain_height": 1,
+        "duration_sec": 8.45560336112976
+      },
+      {
+        "round": 3,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6920298765617706,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "7c63e1669b434acd9e3d5b20d288b496215934a68f0892a9c6240ce673684158",
+        "blockchain_height": 1,
+        "duration_sec": 7.545156240463257
+      },
+      {
+        "round": 4,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6921607103222562,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "4b9518b9f3a5b2da676d39fb81dc2f0d526a0b6a08180803b01b44265e8033ae",
+        "blockchain_height": 1,
+        "duration_sec": 6.755459547042847
+      },
+      {
+        "round": 5,
+        "accuracy": 0.5692423704755145,
+        "precision": 0.32403687634458295,
+        "recall": 0.5692423704755145,
+        "f1_score": 0.41298512255489606,
+        "loss": 0.6920722821572726,
+        "num_active_clients": 5,
+        "rejected_client_ids": [],
+        "num_rejected": 0,
+        "reputation_snapshot": {
+          "0": 1.0,
+          "1": 1.0,
+          "2": 1.0,
+          "3": 1.0,
+          "4": 1.0
+        },
+        "global_weights_hash": "c3af644041445eb1ac22c3f12baa375ece330db8f547cc7f60685894b2dc0192",
+        "blockchain_height": 1,
+        "duration_sec": 8.10134506225586
+      }
+    ],
+    "attack_log": [],
+    "dp_accounting": [
+      {
+        "round": 1,
+        "dp_meta": {
+          "0": {
+            "original_norm": 18.628345489501953,
+            "clipped_norm": 0.9999999403953552,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "1": {
+            "original_norm": 18.037755966186523,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "2": {
+            "original_norm": 17.42708396911621,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "3": {
+            "original_norm": 18.0272216796875,
+            "clipped_norm": 0.9999998807907104,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "4": {
+            "original_norm": 17.853944778442383,
+            "clipped_norm": 0.9999998807907104,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          }
+        }
+      },
+      {
+        "round": 2,
+        "dp_meta": {
+          "0": {
+            "original_norm": 8.010085105895996,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "1": {
+            "original_norm": 6.94342565536499,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "2": {
+            "original_norm": 2.676034450531006,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "3": {
+            "original_norm": 6.524181365966797,
+            "clipped_norm": 0.9999999403953552,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "4": {
+            "original_norm": 5.990780830383301,
+            "clipped_norm": 0.9999998807907104,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          }
+        }
+      },
+      {
+        "round": 3,
+        "dp_meta": {
+          "0": {
+            "original_norm": 7.428913116455078,
+            "clipped_norm": 0.9999998807907104,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "1": {
+            "original_norm": 6.480612754821777,
+            "clipped_norm": 0.9999999403953552,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "2": {
+            "original_norm": 2.7514214515686035,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "3": {
+            "original_norm": 5.957973957061768,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "4": {
+            "original_norm": 5.622961044311523,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          }
+        }
+      },
+      {
+        "round": 4,
+        "dp_meta": {
+          "0": {
+            "original_norm": 7.59255313873291,
+            "clipped_norm": 0.9999999403953552,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "1": {
+            "original_norm": 6.525933265686035,
+            "clipped_norm": 0.9999999403953552,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "2": {
+            "original_norm": 2.791375160217285,
+            "clipped_norm": 0.9999999403953552,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "3": {
+            "original_norm": 5.974391937255859,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "4": {
+            "original_norm": 5.57732629776001,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          }
+        }
+      },
+      {
+        "round": 5,
+        "dp_meta": {
+          "0": {
+            "original_norm": 7.543354511260986,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "1": {
+            "original_norm": 6.543572902679443,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "2": {
+            "original_norm": 2.8326199054718018,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "3": {
+            "original_norm": 6.108985900878906,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          },
+          "4": {
+            "original_norm": 5.656222820281982,
+            "clipped_norm": 1.0,
+            "noise_std": 0.01,
+            "clip_norm_threshold": 1.0
+          }
+        }
+      }
+    ],
+    "blockchain_summary": {
+      "total_blocks": 1,
+      "total_transactions": 0,
+      "accepted_transactions": 0,
+      "rejected_attacks": 0,
+      "is_chain_valid": true
+    },
+    "reputation_summary": {
+      "reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0
+      },
+      "quarantined_clients": [],
+      "active_clients": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "history": {
+        "0": [
+          1.0
+        ],
+        "1": [
+          1.0
+        ],
+        "2": [
+          1.0
+        ],
+        "3": [
+          1.0
+        ],
+        "4": [
+          1.0
+        ]
+      }
+    },
+    "chain_valid": true,
+    "xai_demo": null
+  }
+}

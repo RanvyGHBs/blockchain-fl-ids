@@ -1,0 +1,60 @@
+# System & Environment Configuration
+seed: 42
+device: "auto"  # "cuda", "cpu", or "auto"
+
+# Dataset Configuration
+data:
+  dataset_name: "nsl_kdd"
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  binary_classification: true
+  test_size: 0.2
+  val_size: 0.1
+  scaler: "minmax"
+
+# Federated Learning Configuration
+federated:
+  num_clients: 5
+  num_rounds: 10
+  fraction_fit: 1.0  # 1.0 means all clients participate per round
+  non_iid: true
+  dirichlet_alpha: 0.5  # Lower value = higher degree of Non-IID skew
+  local_epochs: 2
+  batch_size: 64
+  learning_rate: 0.001
+  optimizer: "adam"
+  aggregation_algorithm: "fedavg"  # "fedavg", "fedprox", "trimmed_mean", "median"
+  fedprox_mu: 0.01
+
+# Adversarial & Attack Configuration
+adversarial:
+  attack_enabled: false
+  malicious_client_ids: [3]  # Client 3 acts as the adversary
+  attack_type: "model_poisoning"  # "model_poisoning", "label_flipping", "sign_flipping"
+  poison_noise_std: 1.5
+  poison_scale_factor: -2.0
+  label_flip_target: 0  # Attack -> Normal
+
+# Trust & Defense Engine
+trust:
+  defense_enabled: true
+  norm_threshold_factor: 2.5
+  cosine_threshold: 0.2
+  reputation_decay: 0.85
+  reward_delta: 0.1
+  slash_delta: 0.4
+  quarantine_threshold: 0.35
+  probation_rounds: 3
+
+# Blockchain Configuration
+blockchain:
+  difficulty: 2  # PoA / lightweight proof
+  validator_committee_size: 3
+  model_storage_dir: "data/models_offchain"
+  block_explorer_page_size: 10
+
+# Differential Privacy Configuration
+privacy:
+  dp_enabled: false
+  clip_norm: 1.0
+  noise_multiplier: 0.01  # Gaussian noise sigma

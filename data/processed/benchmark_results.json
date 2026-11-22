@@ -1,0 +1,381 @@
+{
+    "vanilla_fl_honest": {
+        "scenario_name": "Vanilla FedAvg (Honest Participants)",
+        "final_accuracy": 0.5727466288147622,
+        "final_f1_score": 0.4208613809913369,
+        "final_loss": 0.5915208532930352,
+        "round_history": [
+            {
+                "round": 0,
+                "accuracy": 0.5692423704755145,
+                "f1_score": 0.41298512255489606,
+                "loss": 0.6823530641322951,
+                "rejected_updates": 0
+            },
+            {
+                "round": 1,
+                "accuracy": 0.5692423704755145,
+                "precision": 0.32403687634458295,
+                "recall": 0.5692423704755145,
+                "f1_score": 0.41298512255489606,
+                "loss": 0.6244360545664666,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 9.842393636703491
+            },
+            {
+                "round": 2,
+                "accuracy": 0.5700408090844571,
+                "precision": 0.7550534361618058,
+                "recall": 0.5700408090844571,
+                "f1_score": 0.4147892812571319,
+                "loss": 0.5972273593003061,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.259936571121216
+            },
+            {
+                "round": 3,
+                "accuracy": 0.5727466288147622,
+                "precision": 0.7559340079047339,
+                "recall": 0.5727466288147622,
+                "f1_score": 0.4208613809913369,
+                "loss": 0.5915208532930352,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.314301013946533
+            }
+        ],
+        "total_time_sec": 20.85450005531311,
+        "blockchain_summary": {
+            "total_blocks": 1,
+            "total_transactions": 0,
+            "accepted_transactions": 0,
+            "rejected_attacks": 0,
+            "is_chain_valid": true
+        },
+        "reputation_summary": {
+            "reputations": {
+                "0": 1.0,
+                "1": 1.0,
+                "2": 1.0,
+                "3": 1.0,
+                "4": 1.0
+            },
+            "quarantined_clients": [],
+            "active_clients": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "history": {
+                "0": [
+                    1.0
+                ],
+                "1": [
+                    1.0
+                ],
+                "2": [
+                    1.0
+                ],
+                "3": [
+                    1.0
+                ],
+                "4": [
+                    1.0
+                ]
+            }
+        }
+    },
+    "vanilla_fl_poisoned": {
+        "scenario_name": "Vanilla FedAvg Under Model Poisoning (No Defense)",
+        "final_accuracy": 0.5687987934705465,
+        "final_f1_score": 0.41325797156786537,
+        "final_loss": 215.61844922533436,
+        "round_history": [
+            {
+                "round": 0,
+                "accuracy": 0.5692423704755145,
+                "f1_score": 0.41298512255489606,
+                "loss": 0.6903792296934839,
+                "rejected_updates": 0
+            },
+            {
+                "round": 1,
+                "accuracy": 0.22094570617459192,
+                "precision": 0.2299818021498536,
+                "recall": 0.22094570617459192,
+                "f1_score": 0.2214313074340597,
+                "loss": 19.713340523735354,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.2322235107421875
+            },
+            {
+                "round": 2,
+                "accuracy": 0.8880855216465579,
+                "precision": 0.8902787370727931,
+                "recall": 0.8880855216465579,
+                "f1_score": 0.8884432479282834,
+                "loss": 6.883354850319618,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.370305061340332
+            },
+            {
+                "round": 3,
+                "accuracy": 0.5687987934705465,
+                "precision": 0.44142835725344415,
+                "recall": 0.5687987934705465,
+                "f1_score": 0.41325797156786537,
+                "loss": 215.61844922533436,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.239045858383179
+            }
+        ],
+        "total_time_sec": 16.29822850227356,
+        "blockchain_summary": {
+            "total_blocks": 1,
+            "total_transactions": 0,
+            "accepted_transactions": 0,
+            "rejected_attacks": 0,
+            "is_chain_valid": true
+        },
+        "reputation_summary": {
+            "reputations": {
+                "0": 1.0,
+                "1": 1.0,
+                "2": 1.0,
+                "3": 1.0,
+                "4": 1.0
+            },
+            "quarantined_clients": [],
+            "active_clients": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "history": {
+                "0": [
+                    1.0
+                ],
+                "1": [
+                    1.0
+                ],
+                "2": [
+                    1.0
+                ],
+                "3": [
+                    1.0
+                ],
+                "4": [
+                    1.0
+                ]
+            }
+        }
+    },
+    "blockchain_fl_defended": {
+        "scenario_name": "Blockchain-Assisted FL Under Attack (Proposed Framework)",
+        "final_accuracy": 0.5290099361249113,
+        "final_f1_score": 0.44715748391437,
+        "final_loss": 0.7404995970560186,
+        "round_history": [
+            {
+                "round": 0,
+                "accuracy": 0.43075762952448543,
+                "f1_score": 0.2593760558246646,
+                "loss": 0.719214059851371,
+                "rejected_updates": 0
+            },
+            {
+                "round": 1,
+                "accuracy": 0.4340844570617459,
+                "precision": 0.740997466573659,
+                "recall": 0.4340844570617459,
+                "f1_score": 0.26674862868219357,
+                "loss": 0.6972455988123198,
+                "rejected_updates": 1,
+                "rejected_client_ids": [
+                    3
+                ],
+                "duration_sec": 5.397233009338379
+            },
+            {
+                "round": 2,
+                "accuracy": 0.5403655074520937,
+                "precision": 0.7746634243896007,
+                "recall": 0.5403655074520937,
+                "f1_score": 0.46523862685482603,
+                "loss": 0.6923219783666542,
+                "rejected_updates": 1,
+                "rejected_client_ids": [
+                    3
+                ],
+                "duration_sec": 5.807673692703247
+            },
+            {
+                "round": 3,
+                "accuracy": 0.5290099361249113,
+                "precision": 0.7687051086393577,
+                "recall": 0.5290099361249113,
+                "f1_score": 0.44715748391437,
+                "loss": 0.7404995970560186,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 4.981446743011475
+            }
+        ],
+        "total_time_sec": 16.639116764068604,
+        "blockchain_summary": {
+            "total_blocks": 4,
+            "total_transactions": 14,
+            "accepted_transactions": 12,
+            "rejected_attacks": 2,
+            "is_chain_valid": true
+        },
+        "reputation_summary": {
+            "reputations": {
+                "0": 1.0,
+                "1": 1.0,
+                "2": 1.0,
+                "3": 0.3,
+                "4": 1.0
+            },
+            "quarantined_clients": [
+                3
+            ],
+            "active_clients": [
+                0,
+                1,
+                2,
+                4
+            ],
+            "history": {
+                "0": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "1": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "2": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "3": [
+                    1.0,
+                    0.65,
+                    0.3
+                ],
+                "4": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
+        }
+    },
+    "privacy_fl": {
+        "scenario_name": "Privacy-Preserving FL (Local Differential Privacy)",
+        "final_accuracy": 0.5692423704755145,
+        "final_f1_score": 0.41298512255489606,
+        "final_loss": 0.6920155416658536,
+        "round_history": [
+            {
+                "round": 0,
+                "accuracy": 0.43075762952448543,
+                "f1_score": 0.2593760558246646,
+                "loss": 0.7001271881136681,
+                "rejected_updates": 0
+            },
+            {
+                "round": 1,
+                "accuracy": 0.5692423704755145,
+                "precision": 0.32403687634458295,
+                "recall": 0.5692423704755145,
+                "f1_score": 0.41298512255489606,
+                "loss": 0.6927429713451583,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.537480115890503
+            },
+            {
+                "round": 2,
+                "accuracy": 0.5692423704755145,
+                "precision": 0.32403687634458295,
+                "recall": 0.5692423704755145,
+                "f1_score": 0.41298512255489606,
+                "loss": 0.6923431662315168,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.457103967666626
+            },
+            {
+                "round": 3,
+                "accuracy": 0.5692423704755145,
+                "precision": 0.32403687634458295,
+                "recall": 0.5692423704755145,
+                "f1_score": 0.41298512255489606,
+                "loss": 0.6920155416658536,
+                "rejected_updates": 0,
+                "rejected_client_ids": [],
+                "duration_sec": 5.397855758666992
+            }
+        ],
+        "total_time_sec": 16.848601818084717,
+        "blockchain_summary": {
+            "total_blocks": 1,
+            "total_transactions": 0,
+            "accepted_transactions": 0,
+            "rejected_attacks": 0,
+            "is_chain_valid": true
+        },
+        "reputation_summary": {
+            "reputations": {
+                "0": 1.0,
+                "1": 1.0,
+                "2": 1.0,
+                "3": 1.0,
+                "4": 1.0
+            },
+            "quarantined_clients": [],
+            "active_clients": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "history": {
+                "0": [
+                    1.0
+                ],
+                "1": [
+                    1.0
+                ],
+                "2": [
+                    1.0
+                ],
+                "3": [
+                    1.0
+                ],
+                "4": [
+                    1.0
+                ]
+            }
+        }
+    }
+}

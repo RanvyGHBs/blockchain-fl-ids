@@ -177,6 +177,26 @@ class FederatedOrchestrator:
         self.round_logs: List[Dict[str, Any]] = []
         self.dp_accounting: List[Dict[str, Any]] = []
         self.attack_log: List[Dict[str, Any]] = []
+        self.cumulative_accounting: Dict[str, Dict[str, int]] = {
+            "malicious": {
+                "submitted": 0,
+                "rejected_trust": 0,
+                "rejected_crypto": 0,
+                "rejected_total": 0,
+                "flagged_trust": 0,
+                "accepted_aggregated": 0,
+                "prevented_quarantine": 0,
+            },
+            "honest": {
+                "submitted": 0,
+                "rejected_trust": 0,
+                "rejected_crypto": 0,
+                "rejected_total": 0,
+                "flagged_trust": 0,
+                "accepted_aggregated": 0,
+                "prevented_quarantine": 0,
+            }
+        }
 
     @staticmethod
     def _map_label_array(labels: np.ndarray, mapping: Dict[Any, int], split_name: str) -> np.ndarray:
@@ -363,6 +383,27 @@ class FederatedOrchestrator:
         """Initialises all components for a fresh experiment run."""
         self._setup_clients()
 
+        self.cumulative_accounting = {
+            "malicious": {
+                "submitted": 0,
+                "rejected_trust": 0,
+                "rejected_crypto": 0,
+                "rejected_total": 0,
+                "flagged_trust": 0,
+                "accepted_aggregated": 0,
+                "prevented_quarantine": 0,
+            },
+            "honest": {
+                "submitted": 0,
+                "rejected_trust": 0,
+                "rejected_crypto": 0,
+                "rejected_total": 0,
+                "flagged_trust": 0,
+                "accepted_aggregated": 0,
+                "prevented_quarantine": 0,
+            }
+        }
+
         self.server = FederatedServer(
             input_dim=self.input_dim, num_classes=self.num_classes,
             aggregation_algorithm=self.aggregation, device=self.device, seed=self.seed
@@ -405,9 +446,17 @@ class FederatedOrchestrator:
         sample_counts:      Dict[int, int]        = {}
         dp_meta_round:      Dict[int, Dict]       = {}
 
+        # Track clients quarantined before round starts
+        quarantined_cids = [
+            client.client_id for client in self.clients
+            if self.enable_quarantine and self.reputation_mgr.is_quarantined(client.client_id)
+        ]
+        prevented_malicious = [cid for cid in quarantined_cids if cid in self.malicious_client_ids]
+        prevented_honest = [cid for cid in quarantined_cids if cid not in self.malicious_client_ids]
+
         # ---- Step A: Local Training ----
         for client in self.clients:
-            if self.enable_quarantine and self.reputation_mgr.is_quarantined(client.client_id):
+            if client.client_id in quarantined_cids:
                 continue
 
             client.set_global_weights(current_global_weights)
@@ -472,6 +521,10 @@ class FederatedOrchestrator:
             client_signatures[client.client_id]  = sig
             sample_counts[client.client_id]       = client.num_samples
 
+        # Submitted client groups in this round
+        submitted_malicious = [cid for cid in client_raw_weights if cid in self.malicious_client_ids]
+        submitted_honest = [cid for cid in client_raw_weights if cid not in self.malicious_client_ids]
+
         # ---- Step B: Cryptographic Verification & Trust Validation ----
         sig_verified_cids: List[int] = []
         sig_rejected_cids: List[int] = []
@@ -492,7 +545,9 @@ class FederatedOrchestrator:
         accepted_weights: List[np.ndarray] = []
         accepted_counts:  List[int]        = []
         accepted_reps:    List[float]      = []
-        rejected_cids:    List[int]        = list(sig_rejected_cids)
+        trust_flagged_cids: List[int]      = []
+        trust_rejected_cids: List[int]     = []
+        accepted_cids: List[int]           = []
         validation_reports: Dict[int, Dict] = {}
 
         defense_active = self.enable_trust_engine and len(candidate_weights) > 1
@@ -530,8 +585,10 @@ class FederatedOrchestrator:
                     accepted_weights.append(candidate_weights[cid])
                     accepted_counts.append(sample_counts[cid])
                     accepted_reps.append(rep_after)
+                    accepted_cids.append(cid)
                 else:
-                    rejected_cids.append(cid)
+                    trust_flagged_cids.append(cid)
+                    trust_rejected_cids.append(cid)
                     print(
                         f"  [🚨 Trust Alert] Round {r}: Client {cid} REJECTED "
                         f"| Reason: {report['reason'][:80]}"
@@ -553,6 +610,38 @@ class FederatedOrchestrator:
                 accepted_weights.append(candidate_weights[cid])
                 accepted_counts.append(sample_counts[cid])
                 accepted_reps.append(1.0)
+                accepted_cids.append(cid)
+
+        # Explicit Dispositions Breakdown
+        crypto_rejected_malicious = [cid for cid in sig_rejected_cids if cid in self.malicious_client_ids]
+        crypto_rejected_honest = [cid for cid in sig_rejected_cids if cid not in self.malicious_client_ids]
+        trust_flagged_malicious = [cid for cid in trust_flagged_cids if cid in self.malicious_client_ids]
+        trust_flagged_honest = [cid for cid in trust_flagged_cids if cid not in self.malicious_client_ids]
+        trust_rejected_malicious = [cid for cid in trust_rejected_cids if cid in self.malicious_client_ids]
+        trust_rejected_honest = [cid for cid in trust_rejected_cids if cid not in self.malicious_client_ids]
+        accepted_malicious = [cid for cid in accepted_cids if cid in self.malicious_client_ids]
+        accepted_honest = [cid for cid in accepted_cids if cid not in self.malicious_client_ids]
+
+        all_rejected_cids = list(sig_rejected_cids) + list(trust_rejected_cids)
+        rejected_malicious_round = [cid for cid in all_rejected_cids if cid in self.malicious_client_ids]
+        rejected_honest_round = [cid for cid in all_rejected_cids if cid not in self.malicious_client_ids]
+
+        # Update cumulative accounting state
+        self.cumulative_accounting["malicious"]["submitted"] += len(submitted_malicious)
+        self.cumulative_accounting["malicious"]["rejected_trust"] += len(trust_rejected_malicious)
+        self.cumulative_accounting["malicious"]["rejected_crypto"] += len(crypto_rejected_malicious)
+        self.cumulative_accounting["malicious"]["rejected_total"] += len(rejected_malicious_round)
+        self.cumulative_accounting["malicious"]["flagged_trust"] += len(trust_flagged_malicious)
+        self.cumulative_accounting["malicious"]["accepted_aggregated"] += len(accepted_malicious)
+        self.cumulative_accounting["malicious"]["prevented_quarantine"] += len(prevented_malicious)
+
+        self.cumulative_accounting["honest"]["submitted"] += len(submitted_honest)
+        self.cumulative_accounting["honest"]["rejected_trust"] += len(trust_rejected_honest)
+        self.cumulative_accounting["honest"]["rejected_crypto"] += len(crypto_rejected_honest)
+        self.cumulative_accounting["honest"]["rejected_total"] += len(rejected_honest_round)
+        self.cumulative_accounting["honest"]["flagged_trust"] += len(trust_flagged_honest)
+        self.cumulative_accounting["honest"]["accepted_aggregated"] += len(accepted_honest)
+        self.cumulative_accounting["honest"]["prevented_quarantine"] += len(prevented_honest)
 
         # ---- Step C: Aggregation ----
         if len(accepted_weights) > 0:
@@ -589,14 +678,25 @@ class FederatedOrchestrator:
             asr = 0.0
             clean_acc = eval_metrics["accuracy"]
 
-        active_cids = list(client_raw_weights.keys())
-        submitted_malicious = [cid for cid in active_cids if cid in self.malicious_client_ids]
-        submitted_honest = [cid for cid in active_cids if cid not in self.malicious_client_ids]
+        # Round metrics (using submitted malicious as denominator; None if zero submitted)
+        round_mudr = compute_mudr(trust_flagged_cids, submitted_malicious)
+        round_murr = compute_murr(all_rejected_cids, submitted_malicious)
+        round_fpr = compute_fpr(all_rejected_cids, submitted_honest)
+        round_puaa = compute_puaa(all_rejected_cids, submitted_malicious)
 
-        mudr = compute_mudr(rejected_cids, submitted_malicious) if len(submitted_malicious) > 0 else 1.0
-        murr = compute_murr(rejected_cids, submitted_malicious) if len(submitted_malicious) > 0 else 1.0
-        fpr = compute_fpr(rejected_cids, submitted_honest) if len(submitted_honest) > 0 else 0.0
-        puaa = compute_puaa(rejected_cids, submitted_malicious) if len(submitted_malicious) > 0 else 0.0
+        # Cumulative metrics up to round r
+        cum_mal_sub = self.cumulative_accounting["malicious"]["submitted"]
+        cum_mal_rej = self.cumulative_accounting["malicious"]["rejected_total"]
+        cum_mal_acc = self.cumulative_accounting["malicious"]["accepted_aggregated"]
+        cum_mal_flag = self.cumulative_accounting["malicious"]["flagged_trust"]
+        cum_hon_sub = self.cumulative_accounting["honest"]["submitted"]
+        cum_hon_rej = self.cumulative_accounting["honest"]["rejected_total"]
+
+        cum_murr = float(cum_mal_rej / cum_mal_sub) if cum_mal_sub > 0 else None
+        cum_puaa = float(cum_mal_acc / cum_mal_sub) if cum_mal_sub > 0 else None
+        cum_mudr = float(cum_mal_flag / cum_mal_sub) if cum_mal_sub > 0 else None
+        cum_fpr = float(cum_hon_rej / cum_hon_sub) if cum_hon_sub > 0 else 0.0
+
         quarantined_count = len([cid for cid in range(self.num_clients) if self.reputation_mgr.is_quarantined(cid)])
         degradation = max(0.0, (self.clean_baseline_acc - eval_metrics["accuracy"])) if self.clean_baseline_acc is not None else 0.0
 
@@ -611,11 +711,33 @@ class FederatedOrchestrator:
             "accuracy": eval_metrics["accuracy"],
             "clean_accuracy": clean_acc,
             "asr": asr,
-            "mudr": mudr,
-            "murr": murr,
-            "fpr": fpr,
-            "puaa": puaa,
+            "mudr": round_mudr,
+            "murr": round_murr,
+            "fpr": round_fpr,
+            "puaa": round_puaa,
+            "cumulative_mudr": cum_mudr,
+            "cumulative_murr": cum_murr,
+            "cumulative_fpr": cum_fpr,
+            "cumulative_puaa": cum_puaa,
             "quarantined_count": quarantined_count,
+            "prevented_from_submission": len(prevented_malicious) + len(prevented_honest),
+            "prevented_malicious_submissions": len(prevented_malicious),
+            "dispositions": {
+                "malicious_submitted": len(submitted_malicious),
+                "malicious_rejected_trust": len(trust_rejected_malicious),
+                "malicious_rejected_crypto": len(crypto_rejected_malicious),
+                "malicious_rejected_total": len(rejected_malicious_round),
+                "malicious_flagged_trust": len(trust_flagged_malicious),
+                "malicious_accepted_aggregated": len(accepted_malicious),
+                "malicious_prevented_quarantine": len(prevented_malicious),
+                "honest_submitted": len(submitted_honest),
+                "honest_rejected_trust": len(trust_rejected_honest),
+                "honest_rejected_crypto": len(crypto_rejected_honest),
+                "honest_rejected_total": len(rejected_honest_round),
+                "honest_flagged_trust": len(trust_flagged_honest),
+                "honest_accepted_aggregated": len(accepted_honest),
+                "honest_prevented_quarantine": len(prevented_honest),
+            },
             "performance_degradation": degradation,
             "precision": eval_metrics["precision"],
             "recall": eval_metrics["recall"],
@@ -625,8 +747,8 @@ class FederatedOrchestrator:
             "f1_score_macro": eval_metrics.get("f1_score_macro", eval_metrics["f1_score"]),
             "loss": eval_metrics["loss"],
             "num_active_clients": len(accepted_weights),
-            "rejected_client_ids": rejected_cids,
-            "num_rejected": len(rejected_cids),
+            "rejected_client_ids": all_rejected_cids,
+            "num_rejected": len(all_rejected_cids),
             "reputation_snapshot": rep_snapshot,
             "global_weights_hash": self.server.get_global_weights_hash(),
             "blockchain_height": len(self.blockchain.chain),
@@ -641,7 +763,7 @@ class FederatedOrchestrator:
             f"Acc: {eval_metrics['accuracy']*100:.2f}% | "
             f"F1: {eval_metrics['f1_score']:.4f} | "
             f"Loss: {eval_metrics['loss']:.4f} | "
-            f"Rejected: {len(rejected_cids)} | "
+            f"Rejected: {len(all_rejected_cids)} | "
             f"Chain Height: {len(self.blockchain.chain)} | "
             f"Time: {round_duration:.2f}s"
         )
@@ -681,11 +803,33 @@ class FederatedOrchestrator:
             "accuracy": init_eval["accuracy"],
             "clean_accuracy": init_eval["accuracy"],
             "asr": 0.0,
-            "mudr": 1.0,
-            "murr": 1.0,
+            "mudr": None,
+            "murr": None,
             "fpr": 0.0,
-            "puaa": 0.0,
+            "puaa": None,
+            "cumulative_mudr": None,
+            "cumulative_murr": None,
+            "cumulative_fpr": 0.0,
+            "cumulative_puaa": None,
             "quarantined_count": 0,
+            "prevented_from_submission": 0,
+            "prevented_malicious_submissions": 0,
+            "dispositions": {
+                "malicious_submitted": 0,
+                "malicious_rejected_trust": 0,
+                "malicious_rejected_crypto": 0,
+                "malicious_rejected_total": 0,
+                "malicious_flagged_trust": 0,
+                "malicious_accepted_aggregated": 0,
+                "malicious_prevented_quarantine": 0,
+                "honest_submitted": 0,
+                "honest_rejected_trust": 0,
+                "honest_rejected_crypto": 0,
+                "honest_rejected_total": 0,
+                "honest_flagged_trust": 0,
+                "honest_accepted_aggregated": 0,
+                "honest_prevented_quarantine": 0,
+            },
             "performance_degradation": 0.0,
             "precision": init_eval["precision"],
             "recall":    init_eval["recall"],
@@ -720,6 +864,19 @@ class FederatedOrchestrator:
         total_time = time.time() - total_start
         final = self.round_logs[-1]
 
+        # Calculate cumulative metrics across all rounds
+        cum_mal_sub = self.cumulative_accounting["malicious"]["submitted"]
+        cum_mal_rej = self.cumulative_accounting["malicious"]["rejected_total"]
+        cum_mal_acc = self.cumulative_accounting["malicious"]["accepted_aggregated"]
+        cum_mal_flag = self.cumulative_accounting["malicious"]["flagged_trust"]
+        cum_hon_sub = self.cumulative_accounting["honest"]["submitted"]
+        cum_hon_rej = self.cumulative_accounting["honest"]["rejected_total"]
+
+        cum_murr = float(cum_mal_rej / cum_mal_sub) if cum_mal_sub > 0 else None
+        cum_puaa = float(cum_mal_acc / cum_mal_sub) if cum_mal_sub > 0 else None
+        cum_mudr = float(cum_mal_flag / cum_mal_sub) if cum_mal_sub > 0 else None
+        cum_fpr = float(cum_hon_rej / cum_hon_sub) if cum_hon_sub > 0 else 0.0
+
         # XAI demonstration on a single test sample
         xai_demo = None
         if self.feature_names and len(self.X_test) > 0:
@@ -751,12 +908,21 @@ class FederatedOrchestrator:
             "final_accuracy":        final["accuracy"],
             "final_clean_accuracy":  final.get("clean_accuracy", final["accuracy"]),
             "final_asr":             final.get("asr", 0.0),
-            "final_mudr":            final.get("mudr", 1.0),
-            "final_murr":            final.get("murr", 1.0),
-            "final_fpr":             final.get("fpr", 0.0),
-            "final_puaa":            final.get("puaa", 0.0),
+            "final_mudr":            cum_mudr,
+            "final_murr":            cum_murr,
+            "final_fpr":             cum_fpr,
+            "final_puaa":            cum_puaa,
+            "cumulative_mudr":       cum_mudr,
+            "cumulative_murr":       cum_murr,
+            "cumulative_fpr":        cum_fpr,
+            "cumulative_puaa":       cum_puaa,
+            "final_round_mudr":      final.get("mudr"),
+            "final_round_murr":      final.get("murr"),
+            "final_round_fpr":       final.get("fpr", 0.0),
+            "final_round_puaa":      final.get("puaa"),
             "final_quarantined_count": final.get("quarantined_count", 0),
             "final_degradation":     final.get("performance_degradation", 0.0),
+            "cumulative_dispositions": dict(self.cumulative_accounting),
             "final_f1_score":        final["f1_score"],
             "final_precision":       final["precision"],
             "final_recall":          final["recall"],
@@ -773,14 +939,23 @@ class FederatedOrchestrator:
             "chain_valid":           self.blockchain.is_chain_valid(),
             "xai_demo":              xai_demo,
             "stage2d_metrics": {
+                "cumulative_murr": cum_murr,
+                "cumulative_mudr": cum_mudr,
+                "cumulative_puaa": cum_puaa,
+                "cumulative_fpr": cum_fpr,
+                "final_murr": cum_murr,
+                "final_mudr": cum_mudr,
+                "final_puaa": cum_puaa,
+                "final_fpr": cum_fpr,
+                "final_round_murr": final.get("murr"),
+                "final_round_mudr": final.get("mudr"),
+                "final_round_puaa": final.get("puaa"),
+                "final_round_fpr": final.get("fpr", 0.0),
                 "final_clean_accuracy": final.get("clean_accuracy", final["accuracy"]),
                 "final_asr": final.get("asr", 0.0),
-                "final_mudr": final.get("mudr", 1.0),
-                "final_murr": final.get("murr", 1.0),
-                "final_fpr": final.get("fpr", 0.0),
-                "final_puaa": final.get("puaa", 0.0),
                 "final_quarantined_count": final.get("quarantined_count", 0),
-                "final_degradation": final.get("performance_degradation", 0.0)
+                "final_degradation": final.get("performance_degradation", 0.0),
+                "cumulative_dispositions": dict(self.cumulative_accounting)
             },
         }
 

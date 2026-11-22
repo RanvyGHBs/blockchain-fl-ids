@@ -1,10 +1,14 @@
 """
-Stage 2D: Adaptive Byzantine Perturbation Module.
-Implements a sophisticated stealth adversary that strategically calibrates its weight
-perturbations to remain beneath the radar of Multi-Criteria Trust filters:
+Stage 2D: Parameterized Stealth-Constrained Byzantine Perturbation Module.
+Implements a parameterized stealth-constrained Byzantine perturbation using geometric threshold alignment
+to evaluate Multi-Criteria Trust filters:
 1. Tier-1 Norm Bounding: Scales ||w_adv||_2 <= tau_norm * ||w_global||_2 * (1 - epsilon).
 2. Tier-2 Cosine Consensus: Blends perturbation with peer direction to guarantee cos(w_adv, w_peer) >= tau_cos + epsilon.
-3. Tier-3 Validation Loss: Modulates perturbation magnitude via a stealth factor to avoid catastrophic loss spikes.
+3. Tier-3 Validation Loss: Modulates perturbation magnitude via a stealth factor to avoid immediate validation loss spikes.
+
+Threat Model Clarification:
+This implementation is a parameterized stealth-constrained perturbation using geometric threshold alignment
+against static multi-criteria filtering boundaries. It is NOT a closed-loop feedback-adaptive attacker.
 """
 
 from typing import Optional, Dict, Any, Tuple
@@ -23,8 +27,9 @@ def generate_adaptive_byzantine_update(
     seed: Optional[int] = None
 ) -> np.ndarray:
     """
-    Synthesizes an adaptive Byzantine update engineered to evade Tier-1 and Tier-2 trust thresholds
-    while degrading targeted parameters or inducing cumulative model drift.
+    Synthesizes a parameterized stealth-constrained Byzantine perturbation using geometric threshold
+    alignment engineered to evaluate Tier-1 and Tier-2 trust thresholds while inducing parameter drift
+    (not a closed-loop feedback-adaptive attack).
     
     Args:
         honest_weights: The authentic weights computed by the client during local SGD.

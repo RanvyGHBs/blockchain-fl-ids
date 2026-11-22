@@ -32,7 +32,7 @@ Designed to be **universal and industry-agnostic**, this framework enables auton
     |  Node 0: Campus Net  |           |  Node 1: Regional HC |           | Node 3: Attacker Node|
     | - Non-IID Traffic    |           | - Non-IID Traffic    |           | - Model Poisoning    |
     | - PyTorch IDSNet     |           | - PyTorch IDSNet     |           | - Gaussian / Flip    |
-    | - Local DP-SGD Noise |           | - Local DP-SGD Noise |           | - (REJECTED & SLASHED)
+    | - Gaussian Perturb   |           | - Gaussian Perturb   |           | - (REJECTED & SLASHED)
     +----------------------+           +----------------------+           +----------------------+
 ```
 

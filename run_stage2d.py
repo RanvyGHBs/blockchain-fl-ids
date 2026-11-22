@@ -1,17 +1,19 @@
 """
-Stage 2D Benchmark Runner: Advanced Attack Scenarios & Multi-Attack Defense Studio.
-Executes systematic benchmarks across adversarial attack models:
+Stage 2D Benchmark Runner: Advanced Attack Scenarios & Multi-Attack Defense Studio (v2).
+Executes systematic benchmarks across adversarial attack models with matched controls:
 1. Honest Baseline (FedAvg)
-2. Targeted Label-Flipping (Undefended vs Defended)
-3. Sybil Coalition Attack (Median vs Defended Trust-Weighted)
-4. Adaptive Byzantine Perturbation (Undefended vs Defended Multi-Criteria)
+2. Targeted Label-Flipping (Undefended FedAvg vs Defended FedAvg [S2b] vs Defended Trust-Weighted [S3])
+3. Sybil Coalition Attack (Undefended Median vs Defended Median [S4b] vs Defended Trust-Weighted [S5])
+4. Parameterized Byzantine Perturbation (Undefended FedAvg vs Defended FedAvg [S6b] vs Defended Trust-Weighted [S7])
+   * Threat model: Parameterized stealth-constrained Byzantine perturbation using geometric threshold alignment
+     (not a closed-loop feedback-adaptive attack).
 5. Gaussian Noise Poisoning (Undefended vs Defended)
 6. Sign-Flipping Attack (Undefended vs Defended)
 7. Dynamic Defense Matrix Ablation Suite (Tier-by-Tier ablation)
 
 Saves all experimental results strictly to:
-  data/processed/stage2d/multi_attack_benchmarks.json
-Preserves data/processed/stage2_results.json byte-for-byte identical.
+  data/processed/stage2d/multi_attack_benchmarks_v2.json
+Preserves data/processed/stage2_results.json and historical multi_attack_benchmarks.json byte-for-byte identical.
 """
 
 import os
@@ -24,9 +26,9 @@ from src.data.nsl_kdd import NSLKDDLoader
 from src.federated.orchestrator import FederatedOrchestrator
 
 
-def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42) -> Dict[str, Any]:
+def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42, output_filename: str = "multi_attack_benchmarks_v2.json") -> Dict[str, Any]:
     print("=" * 80)
-    print("STAGE 2D: ADVANCED ATTACK SCENARIOS & MULTI-ATTACK DEFENSE BENCHMARKS")
+    print("STAGE 2D: ADVANCED ATTACK SCENARIOS & MULTI-ATTACK DEFENSE BENCHMARKS (v2)")
     print("=" * 80)
 
     # Load NSL-KDD with strict 3-way isolation
@@ -78,6 +80,18 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42) -> Dict[str, Any
             "aggregation": "fedavg",
         },
         {
+            "key": "s2b_targeted_labelflip_fedavg_defended",
+            "name": "S2b: Targeted Label-Flip (Defended FedAvg)",
+            "attack_enabled": True,
+            "attack_type": "targeted_label_flip",
+            "malicious_client_ids": [3],
+            "label_flip_source": 1,
+            "label_flip_target": 0,
+            "label_flip_ratio": 1.0,
+            "defense_enabled": True,
+            "aggregation": "fedavg",
+        },
+        {
             "key": "s3_targeted_labelflip_defended",
             "name": "S3: Targeted Label-Flip (Defended Trust-Weighted)",
             "attack_enabled": True,
@@ -101,6 +115,16 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42) -> Dict[str, Any
             "aggregation": "median",
         },
         {
+            "key": "s4b_sybil_coalition_median_defended",
+            "name": "S4b: Sybil Coalition (Defended Median Aggregation)",
+            "attack_enabled": True,
+            "attack_type": "sybil_coalition",
+            "malicious_client_ids": [2, 3],
+            "sybil_intensity": 2.5,
+            "defense_enabled": True,
+            "aggregation": "median",
+        },
+        {
             "key": "s5_sybil_coalition_defended",
             "name": "S5: Sybil Coalition (Defended Trust-Weighted)",
             "attack_enabled": True,
@@ -110,10 +134,10 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42) -> Dict[str, Any
             "defense_enabled": True,
             "aggregation": "trust_weighted",
         },
-        # 4. Adaptive Byzantine Perturbation
+        # 4. Parameterized Byzantine Perturbation
         {
             "key": "s6_adaptive_byzantine_undefended",
-            "name": "S6: Adaptive Byzantine (Undefended FedAvg)",
+            "name": "S6: Parameterized Byzantine (Undefended FedAvg)",
             "attack_enabled": True,
             "attack_type": "adaptive_byzantine",
             "malicious_client_ids": [3],
@@ -122,8 +146,18 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42) -> Dict[str, Any
             "aggregation": "fedavg",
         },
         {
+            "key": "s6b_parameterized_byzantine_fedavg_defended",
+            "name": "S6b: Parameterized Byzantine (Defended FedAvg)",
+            "attack_enabled": True,
+            "attack_type": "adaptive_byzantine",
+            "malicious_client_ids": [3],
+            "adaptive_stealth_factor": 0.8,
+            "defense_enabled": True,
+            "aggregation": "fedavg",
+        },
+        {
             "key": "s7_adaptive_byzantine_defended",
-            "name": "S7: Adaptive Byzantine (Defended Trust-Weighted)",
+            "name": "S7: Parameterized Byzantine (Defended Trust-Weighted)",
             "attack_enabled": True,
             "attack_type": "adaptive_byzantine",
             "malicious_client_ids": [3],
@@ -295,10 +329,10 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42) -> Dict[str, Any
     total_duration = time.time() - t0_all
     benchmark_results["metadata"]["total_duration_sec"] = round(total_duration, 2)
 
-    # Save exclusively to data/processed/stage2d/multi_attack_benchmarks.json
+    # Save results to output_filename (default: multi_attack_benchmarks_v2.json)
     out_dir = os.path.join("data", "processed", "stage2d")
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, "multi_attack_benchmarks.json")
+    out_path = os.path.join(out_dir, output_filename)
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(benchmark_results, f, indent=2)

@@ -220,13 +220,14 @@ def _build_unavailable_response(reason: str) -> Dict[str, Any]:
 def compute_mudr(
     flagged_client_ids: List[int],
     submitted_malicious_cids: List[int]
-) -> float:
+) -> Optional[float]:
     """
     Malicious Update Detection Rate (MUDR):
         MUDR = (Number of Malicious Updates Flagged by Defense) / (Total Malicious Updates Submitted)
+    Returns None if no malicious updates were submitted.
     """
     if len(submitted_malicious_cids) == 0:
-        return 1.0  # Perfect score if no malicious updates submitted
+        return None
 
     flagged_set = set(flagged_client_ids)
     detected_malicious = sum(1 for cid in submitted_malicious_cids if cid in flagged_set)
@@ -236,13 +237,14 @@ def compute_mudr(
 def compute_murr(
     rejected_client_ids: List[int],
     submitted_malicious_cids: List[int]
-) -> float:
+) -> Optional[float]:
     """
     Malicious Update Rejection Rate (MURR):
         MURR = (Number of Malicious Updates Rejected from Aggregation) / (Total Malicious Updates Submitted)
+    Returns None if no malicious updates were submitted.
     """
     if len(submitted_malicious_cids) == 0:
-        return 1.0
+        return None
 
     rejected_set = set(rejected_client_ids)
     rejected_malicious = sum(1 for cid in submitted_malicious_cids if cid in rejected_set)
@@ -268,13 +270,17 @@ def compute_fpr(
 def compute_puaa(
     rejected_client_ids: List[int],
     submitted_malicious_cids: List[int]
-) -> float:
+) -> Optional[float]:
     """
     Poisoned Updates Accepted into Aggregation (PUAA):
         PUAA = (Number of Malicious Updates Accepted into Aggregation) / (Total Malicious Updates Submitted)
         PUAA = 1.0 - MURR
+    Returns None if no malicious updates were submitted.
     """
-    return 1.0 - compute_murr(rejected_client_ids, submitted_malicious_cids)
+    if len(submitted_malicious_cids) == 0:
+        return None
+    murr = compute_murr(rejected_client_ids, submitted_malicious_cids)
+    return float(1.0 - murr) if murr is not None else None
 
 
 def compute_stage2d_defense_metrics(
@@ -316,10 +322,10 @@ def compute_stage2d_defense_metrics(
         "accuracy": float(curr_acc),
         "clean_accuracy": float(clean_acc),
         "asr": float(asr),
-        "mudr": float(mudr),
-        "murr": float(murr),
+        "mudr": float(mudr) if mudr is not None else None,
+        "murr": float(murr) if murr is not None else None,
         "fpr": float(fpr),
-        "puaa": float(puaa),
+        "puaa": float(puaa) if puaa is not None else None,
         "quarantined_count": int(quarantined_count),
         "performance_degradation": float(max(0.0, degradation)),
         "precision_macro": float(eval_metrics.get("precision_macro", eval_metrics.get("precision", 0.0))),

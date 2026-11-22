@@ -23,7 +23,7 @@ class LocalDifferentialPrivacy:
 
     def privatize(self, weights: np.ndarray) -> Tuple[np.ndarray, dict]:
         """
-        Applies DP-SGD style parameter privatization:
+        Applies clipping-based Gaussian update perturbation (without formal privacy accounting):
         1. L2 Norm Clipping: w_clipped = w / max(1, ||w||_2 / C)
         2. Gaussian Mechanism: w_private = w_clipped + N(0, (sigma * C)^2 * I)
         """

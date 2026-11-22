@@ -486,10 +486,10 @@ elif section == "⚙️ 2. FL & Defense Studio":
                 "🟢 Scenario 1: Honest Baseline (FedAvg)",
                 "🎯 Scenario 2: Targeted Label-Flipping Attack (DoS -> Normal)",
                 "👥 Scenario 3: Sybil Coalition Attack (Coordinated Median Distortion)",
-                "🥷 Scenario 4: Adaptive Byzantine Perturbation (Tier Evasion & Drift)",
+                "🥷 Scenario 4: Parameterized Byzantine Perturbation (Geometric Threshold Alignment)",
                 "🚨 Scenario 5: Gaussian Noise Poisoning (Gradient Explosion)",
                 "🔄 Scenario 6: Sign-Flipping Attack (Directional Inversion)",
-                "🔒 Scenario 7: Privacy Perturbation (L2-Clipped Gaussian Noise)"
+                "🔒 Scenario 7: Privacy Perturbation (Clipping-based Gaussian Noise)"
             ]
         )
 
@@ -539,14 +539,14 @@ elif section == "⚙️ 2. FL & Defense Studio":
             atk_enabled = True
             atk_type = "adaptive_byzantine"
             malicious_cids = [3]
-            st.markdown("**Adaptive Stealth Hyperparameters:**")
+            st.markdown("**Parameterized Stealth Hyperparameters:**")
             col_ab1, col_ab2 = st.columns(2)
             with col_ab1:
                 stealth_factor = st.slider("Stealth Factor (λ)", min_value=0.1, max_value=0.95, value=0.8, step=0.05,
                                            help="Higher values keep updates closer to peer consensus to evade detection.")
             with col_ab2:
                 loss_headroom = st.slider("Loss Headroom", min_value=0.1, max_value=1.0, value=0.5, step=0.1)
-            explanation_txt = "Node 3 dynamically bounds its L2 norm and aligns cosine direction to consensus, attempting stealthy boundary drift."
+            explanation_txt = "Node 3 injects a parameterized stealth-constrained Byzantine perturbation calibrated against geometric trust thresholds to induce parameter drift (not a closed-loop feedback-adaptive attack)."
         elif "Scenario 5" in scenario_choice:
             atk_enabled = True
             atk_type = "gaussian_noise"
@@ -562,7 +562,7 @@ elif section == "⚙️ 2. FL & Defense Studio":
             atk_type = "none"
             dp_active = True
             malicious_cids = []
-            explanation_txt = "Nodes perturb updates locally with L2 clipping (C=1.0) and Gaussian noise without formal accounting."
+            explanation_txt = "Nodes perturb updates locally with clipping-based Gaussian update perturbation (without formal privacy accounting)."
 
         st.caption(f"**Scenario Behavior:** {explanation_txt}")
 
@@ -652,8 +652,8 @@ elif section == "⚙️ 2. FL & Defense Studio":
                         "accuracy": r_record["accuracy"] * 100,
                         "clean_accuracy": r_record.get("clean_accuracy", r_record["accuracy"]) * 100,
                         "asr": r_record.get("asr", 0.0) * 100,
-                        "mudr": r_record.get("mudr", 1.0) * 100,
-                        "murr": r_record.get("murr", 1.0) * 100,
+                        "mudr": (r_record["mudr"] * 100) if r_record.get("mudr") is not None else None,
+                        "murr": (r_record["murr"] * 100) if r_record.get("murr") is not None else None,
                         "fpr": r_record.get("fpr", 0.0) * 100,
                         "f1_score": r_record["f1_score"],
                         "loss": r_record["loss"],
@@ -674,10 +674,14 @@ elif section == "⚙️ 2. FL & Defense Studio":
                     "final_acc": last_r["accuracy"] * 100,
                     "clean_acc": last_r.get("clean_accuracy", last_r["accuracy"]) * 100,
                     "asr": last_r.get("asr", 0.0) * 100,
-                    "mudr": last_r.get("mudr", 1.0) * 100,
-                    "murr": last_r.get("murr", 1.0) * 100,
-                    "fpr": last_r.get("fpr", 0.0) * 100,
-                    "puaa": last_r.get("puaa", 0.0) * 100,
+                    "mudr": results.get("cumulative_mudr"),
+                    "murr": results.get("cumulative_murr"),
+                    "fpr": results.get("cumulative_fpr", 0.0),
+                    "puaa": results.get("cumulative_puaa"),
+                    "prevented_quarantine": results.get("cumulative_dispositions", {}).get("malicious", {}).get("prevented_quarantine", 0),
+                    "malicious_submitted": results.get("cumulative_dispositions", {}).get("malicious", {}).get("submitted", 0),
+                    "malicious_rejected": results.get("cumulative_dispositions", {}).get("malicious", {}).get("rejected_total", 0),
+                    "malicious_accepted": results.get("cumulative_dispositions", {}).get("malicious", {}).get("accepted_aggregated", 0),
                     "attack_type": atk_type,
                     "rejected": last_r["rejected_client_ids"],
                     "defense": defense_active,
@@ -689,7 +693,7 @@ elif section == "⚙️ 2. FL & Defense Studio":
     # Stage 2D Headline Metrics
     if hasattr(st.session_state, "last_storyboard") and st.session_state.last_storyboard:
         sb = st.session_state.last_storyboard
-        st.markdown("### 📊 Stage 2D Multi-Attack Defense Evaluation Metrics")
+        st.markdown("### 📊 Stage 2D Multi-Attack Defense Evaluation Metrics (Cumulative Accounting)")
         m1, m2, m3, m4, m5, m6 = st.columns(6)
         with m1:
             st.metric("Global Accuracy", f"{sb['final_acc']:.2f}%", delta=f"{sb['final_acc'] - sb['baseline_acc']:+.2f}%")
@@ -698,11 +702,22 @@ elif section == "⚙️ 2. FL & Defense Studio":
         with m3:
             st.metric("Attack Success Rate (ASR)", f"{sb['asr']:.1f}%")
         with m4:
-            st.metric("Malicious Detection (MUDR)", f"{sb['mudr']:.1f}%")
+            mudr_str = f"{sb['mudr'] * 100:.1f}%" if sb.get('mudr') is not None else "N/A"
+            st.metric("Cumulative Detection (MUDR)", mudr_str)
         with m5:
-            st.metric("Malicious Rejection (MURR)", f"{sb['murr']:.1f}%")
+            murr_str = f"{sb['murr'] * 100:.1f}%" if sb.get('murr') is not None else "N/A"
+            st.metric("Cumulative Rejection (MURR)", murr_str)
         with m6:
-            st.metric("False-Positive Rate (FPR)", f"{sb['fpr']:.1f}%")
+            fpr_str = f"{sb['fpr'] * 100:.1f}%"
+            st.metric("False-Positive Rate (FPR)", fpr_str)
+
+        st.caption(
+            f"**Malicious Update Dispositions:** "
+            f"Submitted: **{sb.get('malicious_submitted', 0)}** | "
+            f"Rejected: **{sb.get('malicious_rejected', 0)}** | "
+            f"Accepted into Aggregation (PUAA): **{sb.get('malicious_accepted', 0)}** | "
+            f"Quarantined (Prevented Submissions): **{sb.get('prevented_quarantine', 0)}**"
+        )
 
     # 5-Step Defense & Recovery Storyboard Visualization
     st.markdown("---")

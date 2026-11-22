@@ -34,6 +34,9 @@ class FederatedClient:
         self.y_local = y_local
 
         # Internal PyTorch model
+        torch.manual_seed(self.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self.seed)
         self.model = IDSNet(input_dim=input_dim, num_classes=num_classes).to(self.device)
 
         # Reputation and status tracked locally / on-chain
@@ -54,12 +57,18 @@ class FederatedClient:
         return self.model.get_weights_hash()
 
     @staticmethod
-    def _build_batch_indices(num_samples: int, batch_size: int, shuffle: bool = True) -> List[List[int]]:
+    def _build_batch_indices(num_samples: int, batch_size: int, shuffle: bool = True, seed: Optional[int] = None) -> List[List[int]]:
         """
         Partitions sample indices into batches such that no batch has size 1 when num_samples > 1.
         Preserves 100% of samples (every sample index is included exactly once per epoch).
         """
-        indices = np.random.permutation(num_samples).tolist() if shuffle else list(range(num_samples))
+        if shuffle:
+            if seed is not None:
+                indices = np.random.RandomState(seed).permutation(num_samples).tolist()
+            else:
+                indices = np.random.permutation(num_samples).tolist()
+        else:
+            indices = list(range(num_samples))
         if num_samples <= 1:
             return [indices]
 
@@ -91,7 +100,8 @@ class FederatedClient:
         return batches
 
     def local_train(self, epochs: int = 2, batch_size: int = 64, lr: float = 0.001,
-                    fedprox_mu: float = 0.0, global_weights: Optional[np.ndarray] = None) -> Dict[str, Any]:
+                    fedprox_mu: float = 0.0, global_weights: Optional[np.ndarray] = None,
+                    round_num: int = 1) -> Dict[str, Any]:
         """
         Executes local model training on private data.
         Supports both standard Empirical Risk Minimization and FedProx proximal regularization:
@@ -102,6 +112,11 @@ class FederatedClient:
         - Provides a BatchNorm-compatible mode guard fallback for N == 1 singleton clients.
         - Silently discarding training samples is strictly prevented.
         """
+        client_train_seed = (self.seed * 10007 + round_num * 997) % (2**31 - 1)
+        torch.manual_seed(client_train_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(client_train_seed)
+
         self.model.train()
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
@@ -125,8 +140,9 @@ class FederatedClient:
         total_samples_trained = 0
 
         for epoch in range(epochs):
-            # Dynamic batch partitioning ensuring NO singleton batch when N > 1
-            batch_slices = self._build_batch_indices(N, batch_size, shuffle=True)
+            # Dynamic batch partitioning ensuring NO singleton batch when N > 1 (reproducible seed)
+            batch_seed = (self.seed * 10007 + round_num * 997 + epoch * 31) % (2**31 - 1)
+            batch_slices = self._build_batch_indices(N, batch_size, shuffle=True, seed=batch_seed)
 
             for b_idx in batch_slices:
                 X_batch = torch.from_numpy(self.X_local[b_idx]).to(self.device)

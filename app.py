@@ -651,10 +651,10 @@ elif section == "⚙️ 2. FL & Defense Studio":
                         "round": r_record["round"],
                         "accuracy": r_record["accuracy"] * 100,
                         "clean_accuracy": r_record.get("clean_accuracy", r_record["accuracy"]) * 100,
-                        "asr": r_record.get("asr", 0.0) * 100,
+                        "asr": (r_record["asr"] * 100) if r_record.get("asr") is not None else None,
                         "mudr": (r_record["mudr"] * 100) if r_record.get("mudr") is not None else None,
                         "murr": (r_record["murr"] * 100) if r_record.get("murr") is not None else None,
-                        "fpr": r_record.get("fpr", 0.0) * 100,
+                        "fpr": (r_record["fpr"] * 100) if r_record.get("fpr") is not None else None,
                         "f1_score": r_record["f1_score"],
                         "loss": r_record["loss"],
                         "rejected": r_record["num_rejected"],
@@ -673,10 +673,10 @@ elif section == "⚙️ 2. FL & Defense Studio":
                     "baseline_acc": results["round_history"][0]["accuracy"] * 100,
                     "final_acc": last_r["accuracy"] * 100,
                     "clean_acc": last_r.get("clean_accuracy", last_r["accuracy"]) * 100,
-                    "asr": last_r.get("asr", 0.0) * 100,
+                    "asr": (last_r["asr"] * 100) if last_r.get("asr") is not None else None,
                     "mudr": results.get("cumulative_mudr"),
                     "murr": results.get("cumulative_murr"),
-                    "fpr": results.get("cumulative_fpr", 0.0),
+                    "fpr": results.get("cumulative_fpr"),
                     "puaa": results.get("cumulative_puaa"),
                     "prevented_quarantine": results.get("cumulative_dispositions", {}).get("malicious", {}).get("prevented_quarantine", 0),
                     "malicious_submitted": results.get("cumulative_dispositions", {}).get("malicious", {}).get("submitted", 0),
@@ -700,7 +700,8 @@ elif section == "⚙️ 2. FL & Defense Studio":
         with m2:
             st.metric("Clean Accuracy", f"{sb['clean_acc']:.2f}%")
         with m3:
-            st.metric("Attack Success Rate (ASR)", f"{sb['asr']:.1f}%")
+            asr_str = f"{sb['asr']:.1f}%" if sb.get('asr') is not None else "N/A"
+            st.metric("Attack Success Rate (ASR)", asr_str)
         with m4:
             mudr_str = f"{sb['mudr'] * 100:.1f}%" if sb.get('mudr') is not None else "N/A"
             st.metric("Cumulative Detection (MUDR)", mudr_str)
@@ -708,7 +709,7 @@ elif section == "⚙️ 2. FL & Defense Studio":
             murr_str = f"{sb['murr'] * 100:.1f}%" if sb.get('murr') is not None else "N/A"
             st.metric("Cumulative Rejection (MURR)", murr_str)
         with m6:
-            fpr_str = f"{sb['fpr'] * 100:.1f}%"
+            fpr_str = f"{sb['fpr'] * 100:.1f}%" if sb.get('fpr') is not None else "N/A"
             st.metric("False-Positive Rate (FPR)", fpr_str)
 
         st.caption(
@@ -742,9 +743,11 @@ elif section == "⚙️ 2. FL & Defense Studio":
             st.markdown("""<div class="story-step"><b>Step 5: Recovery</b><br><small>Post-round accuracy:</small><br><b>""" + f"{sb['final_acc']:.2f}%" + """</b></div>""", unsafe_allow_html=True)
 
         if rej_count > 0:
-            st.success(f"🛡️ **Defense Outcome:** Malicious update from Node(s) {sb['rejected']} was intercepted and excluded. Model accuracy maintained at **{sb['final_acc']:.2f}%** (Clean Acc: **{sb['clean_acc']:.2f}%**, ASR: **{sb['asr']:.1f}%**).")
+            asr_desc = f", ASR: **{sb['asr']:.1f}%**" if sb.get("asr") is not None else ""
+            st.success(f"🛡️ **Defense Outcome:** Malicious update from Node(s) {sb['rejected']} was intercepted and excluded. Model accuracy maintained at **{sb['final_acc']:.2f}%** (Clean Acc: **{sb['clean_acc']:.2f}%**{asr_desc}).")
         elif sb["attack_type"] != "none" and not sb["defense"]:
-            st.error(f"⚠️ **Undefended Outcome:** Malicious {atk_name} update was blindly aggregated into the global model (ASR: **{sb['asr']:.1f}%**, Acc: **{sb['final_acc']:.2f}%**).")
+            asr_desc = f"ASR: **{sb['asr']:.1f}%**, " if sb.get("asr") is not None else ""
+            st.error(f"⚠️ **Undefended Outcome:** Malicious {atk_name} update was blindly aggregated into the global model ({asr_desc}Acc: **{sb['final_acc']:.2f}%**).")
         else:
             st.info(f"✅ **Honest Convergence:** All participants submitted valid updates. Model accuracy is **{sb['final_acc']:.2f}%**.")
     else:

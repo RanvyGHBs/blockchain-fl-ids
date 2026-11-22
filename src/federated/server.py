@@ -33,6 +33,9 @@ class FederatedServer:
         self.seed = seed
 
         # Global Model
+        torch.manual_seed(self.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self.seed)
         self.global_model = IDSNet(input_dim=input_dim, num_classes=num_classes).to(self.device)
 
         # Round tracking
@@ -85,7 +88,8 @@ class FederatedServer:
             else:
                 train_meta = client.local_train(
                     epochs=local_epochs, batch_size=batch_size, lr=lr,
-                    fedprox_mu=fedprox_mu, global_weights=current_global_weights
+                    fedprox_mu=fedprox_mu, global_weights=current_global_weights,
+                    round_num=self.current_round
                 )
                 local_weights = client.get_local_weights()
 

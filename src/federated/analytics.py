@@ -254,13 +254,14 @@ def compute_murr(
 def compute_fpr(
     rejected_client_ids: List[int],
     submitted_honest_cids: List[int]
-) -> float:
+) -> Optional[float]:
     """
     False-Positive Rate (FPR):
         FPR = (Number of Honest Updates Erroneously Rejected) / (Total Honest Updates Submitted)
+    Returns None if no honest updates were submitted.
     """
     if len(submitted_honest_cids) == 0:
-        return 0.0
+        return None
 
     rejected_set = set(rejected_client_ids)
     false_positives = sum(1 for cid in submitted_honest_cids if cid in rejected_set)
@@ -307,13 +308,13 @@ def compute_stage2d_defense_metrics(
     puaa = compute_puaa(rejected_client_ids, submitted_malicious)
 
     # ASR and clean accuracy
-    asr = 0.0
+    asr = None
     clean_acc = eval_metrics.get("accuracy", 0.0)
 
     if y_true is not None and y_pred is not None and source_class is not None and target_class is not None:
         from src.attacks.targeted_poisoning import compute_attack_success_rate, compute_clean_accuracy
-        asr = compute_attack_success_rate(y_true, y_pred, source_class, target_class)
-        clean_acc = compute_clean_accuracy(y_true, y_pred, source_class)
+        asr = float(compute_attack_success_rate(y_true, y_pred, source_class, target_class))
+        clean_acc = float(compute_clean_accuracy(y_true, y_pred, source_class))
 
     curr_acc = eval_metrics.get("accuracy", 0.0)
     degradation = (clean_baseline_acc - curr_acc) if clean_baseline_acc is not None else 0.0
@@ -321,10 +322,10 @@ def compute_stage2d_defense_metrics(
     return {
         "accuracy": float(curr_acc),
         "clean_accuracy": float(clean_acc),
-        "asr": float(asr),
+        "asr": asr,
         "mudr": float(mudr) if mudr is not None else None,
         "murr": float(murr) if murr is not None else None,
-        "fpr": float(fpr),
+        "fpr": float(fpr) if fpr is not None else None,
         "puaa": float(puaa) if puaa is not None else None,
         "quarantined_count": int(quarantined_count),
         "performance_degradation": float(max(0.0, degradation)),

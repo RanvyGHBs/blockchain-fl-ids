@@ -381,6 +381,13 @@ class FederatedOrchestrator:
 
     def setup(self):
         """Initialises all components for a fresh experiment run."""
+        import random
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self.seed)
+
         self._setup_clients()
 
         self.cumulative_accounting = {
@@ -463,7 +470,8 @@ class FederatedOrchestrator:
             client.local_train(
                 epochs=self.local_epochs, batch_size=self.batch_size,
                 lr=self.lr, fedprox_mu=self.fedprox_mu,
-                global_weights=current_global_weights
+                global_weights=current_global_weights,
+                round_num=r
             )
             weights = client.get_local_weights()
 
@@ -671,12 +679,19 @@ class FederatedOrchestrator:
         else:
             y_preds = np.array(y_preds) if y_preds is not None else np.array([])
 
-        if self.attack_type in ("label_flip", "targeted_label_flip") and len(self.X_test) > 0:
-            asr = compute_attack_success_rate(self.y_test, y_preds, self.label_flip_source, self.label_flip_target)
-            clean_acc = compute_clean_accuracy(self.y_test, y_preds, self.label_flip_source)
+        is_targeted_attack = (
+            self.attack_enabled
+            and self.attack_type in ("label_flip", "targeted_label_flip")
+            and self.label_flip_source is not None
+            and self.label_flip_target is not None
+            and len(self.X_test) > 0
+        )
+        if is_targeted_attack:
+            asr = float(compute_attack_success_rate(self.y_test, y_preds, self.label_flip_source, self.label_flip_target))
+            clean_acc = float(compute_clean_accuracy(self.y_test, y_preds, self.label_flip_source))
         else:
-            asr = 0.0
-            clean_acc = eval_metrics["accuracy"]
+            asr = None
+            clean_acc = float(eval_metrics["accuracy"])
 
         # Round metrics (using submitted malicious as denominator; None if zero submitted)
         round_mudr = compute_mudr(trust_flagged_cids, submitted_malicious)
@@ -695,7 +710,7 @@ class FederatedOrchestrator:
         cum_murr = float(cum_mal_rej / cum_mal_sub) if cum_mal_sub > 0 else None
         cum_puaa = float(cum_mal_acc / cum_mal_sub) if cum_mal_sub > 0 else None
         cum_mudr = float(cum_mal_flag / cum_mal_sub) if cum_mal_sub > 0 else None
-        cum_fpr = float(cum_hon_rej / cum_hon_sub) if cum_hon_sub > 0 else 0.0
+        cum_fpr = float(cum_hon_rej / cum_hon_sub) if cum_hon_sub > 0 else None
 
         quarantined_count = len([cid for cid in range(self.num_clients) if self.reputation_mgr.is_quarantined(cid)])
         degradation = max(0.0, (self.clean_baseline_acc - eval_metrics["accuracy"])) if self.clean_baseline_acc is not None else 0.0
@@ -790,6 +805,12 @@ class FederatedOrchestrator:
         )
 
         self.setup()
+        initial_model_weights_hash = self.server.get_global_weights_hash()
+        cleaned_config = {
+            k: v for k, v in self.config.items()
+            if k not in ("X_train", "y_train", "X_val", "y_val", "X_test", "y_test", "feature_names", "class_names", "val_data", "loader")
+        }
+        config_hash = CryptoManager.sha256_hash(json.dumps(cleaned_config, sort_keys=True, default=str))
 
         # Strict 3-Way Isolation: retrieve prepared validation benchmark
         val_data = self.val_data
@@ -802,14 +823,14 @@ class FederatedOrchestrator:
             "round": 0,
             "accuracy": init_eval["accuracy"],
             "clean_accuracy": init_eval["accuracy"],
-            "asr": 0.0,
+            "asr": None,
             "mudr": None,
             "murr": None,
-            "fpr": 0.0,
+            "fpr": None,
             "puaa": None,
             "cumulative_mudr": None,
             "cumulative_murr": None,
-            "cumulative_fpr": 0.0,
+            "cumulative_fpr": None,
             "cumulative_puaa": None,
             "quarantined_count": 0,
             "prevented_from_submission": 0,
@@ -875,7 +896,7 @@ class FederatedOrchestrator:
         cum_murr = float(cum_mal_rej / cum_mal_sub) if cum_mal_sub > 0 else None
         cum_puaa = float(cum_mal_acc / cum_mal_sub) if cum_mal_sub > 0 else None
         cum_mudr = float(cum_mal_flag / cum_mal_sub) if cum_mal_sub > 0 else None
-        cum_fpr = float(cum_hon_rej / cum_hon_sub) if cum_hon_sub > 0 else 0.0
+        cum_fpr = float(cum_hon_rej / cum_hon_sub) if cum_hon_sub > 0 else None
 
         # XAI demonstration on a single test sample
         xai_demo = None
@@ -901,13 +922,15 @@ class FederatedOrchestrator:
             "dataset": self.dataset_name,
             "input_dim": self.input_dim,
             "num_classes": self.num_classes,
+            "initial_model_weights_hash": initial_model_weights_hash,
+            "config_hash": config_hash,
             "config": {
                 k: v for k, v in self.config.items()
                 if k not in ("X_train", "y_train", "X_val", "y_val", "X_test", "y_test", "feature_names", "class_names", "val_data", "loader")
             },
             "final_accuracy":        final["accuracy"],
             "final_clean_accuracy":  final.get("clean_accuracy", final["accuracy"]),
-            "final_asr":             final.get("asr", 0.0),
+            "final_asr":             final.get("asr"),
             "final_mudr":            cum_mudr,
             "final_murr":            cum_murr,
             "final_fpr":             cum_fpr,
@@ -918,7 +941,7 @@ class FederatedOrchestrator:
             "cumulative_puaa":       cum_puaa,
             "final_round_mudr":      final.get("mudr"),
             "final_round_murr":      final.get("murr"),
-            "final_round_fpr":       final.get("fpr", 0.0),
+            "final_round_fpr":       final.get("fpr"),
             "final_round_puaa":      final.get("puaa"),
             "final_quarantined_count": final.get("quarantined_count", 0),
             "final_degradation":     final.get("performance_degradation", 0.0),
@@ -939,6 +962,8 @@ class FederatedOrchestrator:
             "chain_valid":           self.blockchain.is_chain_valid(),
             "xai_demo":              xai_demo,
             "stage2d_metrics": {
+                "initial_model_weights_hash": initial_model_weights_hash,
+                "config_hash": config_hash,
                 "cumulative_murr": cum_murr,
                 "cumulative_mudr": cum_mudr,
                 "cumulative_puaa": cum_puaa,
@@ -950,9 +975,9 @@ class FederatedOrchestrator:
                 "final_round_murr": final.get("murr"),
                 "final_round_mudr": final.get("mudr"),
                 "final_round_puaa": final.get("puaa"),
-                "final_round_fpr": final.get("fpr", 0.0),
+                "final_round_fpr": final.get("fpr"),
                 "final_clean_accuracy": final.get("clean_accuracy", final["accuracy"]),
-                "final_asr": final.get("asr", 0.0),
+                "final_asr": final.get("asr"),
                 "final_quarantined_count": final.get("quarantined_count", 0),
                 "final_degradation": final.get("performance_degradation", 0.0),
                 "cumulative_dispositions": dict(self.cumulative_accounting)

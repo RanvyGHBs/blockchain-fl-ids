@@ -19,16 +19,18 @@ Preserves data/processed/stage2_results.json and historical multi_attack_benchma
 import os
 import json
 import time
+import random
 from typing import Dict, Any
 import numpy as np
+import torch
 
 from src.data.nsl_kdd import NSLKDDLoader
 from src.federated.orchestrator import FederatedOrchestrator
 
 
-def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42, output_filename: str = "multi_attack_benchmarks_v2.json") -> Dict[str, Any]:
+def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42, output_filename: str = "multi_attack_benchmarks_v3.json") -> Dict[str, Any]:
     print("=" * 80)
-    print("STAGE 2D: ADVANCED ATTACK SCENARIOS & MULTI-ATTACK DEFENSE BENCHMARKS (v2)")
+    print("STAGE 2D: ADVANCED ATTACK SCENARIOS & MULTI-ATTACK DEFENSE BENCHMARKS (v3)")
     print("=" * 80)
 
     # Load NSL-KDD with strict 3-way isolation
@@ -299,6 +301,15 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42, output_filename:
     for sc in scenarios:
         key = sc["key"]
         print(f"\n---> Running {sc['name']}...")
+        scenario_seed = sc.get("seed", seed)
+
+        # Independently initialize all RNGs at the beginning of every scenario
+        random.seed(scenario_seed)
+        np.random.seed(scenario_seed)
+        torch.manual_seed(scenario_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(scenario_seed)
+
         cfg = dict(base_config)
         cfg["scenario_name"] = sc["name"]
         cfg["attack_enabled"] = sc["attack_enabled"]

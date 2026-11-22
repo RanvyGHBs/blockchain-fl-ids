@@ -27,6 +27,18 @@ from src.attacks.model_poisoning import (
     apply_gaussian_noise_attack, apply_sign_flipping_attack, apply_model_scaling_attack
 )
 from src.attacks.data_poisoning import apply_label_flipping_attack
+from src.attacks.targeted_poisoning import (
+    apply_targeted_label_flipping_attack, compute_attack_success_rate, compute_clean_accuracy
+)
+from src.attacks.sybil_coalition import (
+    generate_sybil_coalition_updates, evaluate_median_distortion
+)
+from src.attacks.adaptive_byzantine import (
+    generate_adaptive_byzantine_update, verify_evasion_criteria
+)
+from src.federated.analytics import (
+    compute_mudr, compute_murr, compute_fpr, compute_puaa, compute_stage2d_defense_metrics
+)
 from src.trust.evaluator import MultiCriteriaTrustEngine
 from src.trust.reputation import ReputationManager
 from src.blockchain.crypto import CryptoManager
@@ -44,6 +56,9 @@ ATTACK_REGISTRY = {
     "sign_flip":      lambda w, seed: apply_sign_flipping_attack(w, scale=-3.0),
     "model_scaling":  lambda w, seed: apply_model_scaling_attack(w, scale_factor=10.0),
     "label_flip":     None,  # Handled at data-loading time
+    "targeted_label_flip": None,  # Handled at data-loading time
+    "sybil_coalition": None,      # Handled during round execution
+    "adaptive_byzantine": None,   # Handled during round execution
 }
 
 
@@ -88,12 +103,27 @@ class FederatedOrchestrator:
         self.attack_type = config.get("attack_type", "gaussian_noise")
         self.label_flip_source = config.get("label_flip_source", 1)
         self.label_flip_target = config.get("label_flip_target", 0)
+        self.label_flip_ratio = float(config.get("label_flip_ratio", 1.0))
+        self.sybil_intensity = float(config.get("sybil_intensity", 2.0))
+        self.adaptive_stealth_factor = float(config.get("adaptive_stealth_factor", 0.8))
+        self.adaptive_loss_headroom = float(config.get("adaptive_loss_headroom", 0.5))
 
-        # Defense / blockchain
+        # Defense / blockchain / Dynamic Defense Matrix
         self.defense_enabled = config.get("defense_enabled", False)
+        defense_matrix = config.get("defense_matrix", {})
+        self.enable_trust_engine = bool(defense_matrix.get("trust_engine", self.defense_enabled))
+        self.enable_norm_check = bool(defense_matrix.get("norm_check", True))
+        self.enable_cosine_check = bool(defense_matrix.get("cosine_check", True))
+        self.enable_loss_check = bool(defense_matrix.get("loss_check", True))
+        self.enable_reputation = bool(defense_matrix.get("reputation", self.defense_enabled))
+        self.enable_quarantine = bool(defense_matrix.get("quarantine", self.defense_enabled))
+        self.enable_signature_verify = bool(defense_matrix.get("signature_verify", True))
+        self.enable_blockchain = bool(defense_matrix.get("blockchain", self.defense_enabled))
+
         self.dp_enabled = config.get("dp_enabled", False)
         self.dp_clip_norm = config.get("dp_clip_norm", 1.0)
         self.dp_noise_multiplier = config.get("dp_noise_multiplier", 0.01)
+        self.clean_baseline_acc: Optional[float] = None
 
         # Track routing and dataset loading
         self.track = config.get("track", "Track A")
@@ -283,13 +313,12 @@ class FederatedOrchestrator:
         for cid in range(self.num_clients):
             Xc, yc = splits[cid]
 
-            # Data poisoning (label flip) applied at data-loading time.
-            # Label-flipping is a data-poisoning attack that permanently poisons
-            # the client's local training dataset once during client setup (Phase: "setup", Round: 0).
+            # Data poisoning (label flip / targeted label flip) applied at data-loading time.
+            # Permanently poisons the client's local training dataset once during client setup (Phase: "setup", Round: 0).
             # It takes effect in every subsequent local training epoch on that client.
             if (self.attack_enabled
                     and cid in self.malicious_client_ids
-                    and self.attack_type == "label_flip"):
+                    and self.attack_type in ("label_flip", "targeted_label_flip")):
                 src_cls = self.label_flip_source
                 tgt_cls = self.label_flip_target
                 # Safeguard for Non-IID slices: if target source_class not in yc, pick first available class
@@ -297,14 +326,10 @@ class FederatedOrchestrator:
                     src_cls = int(yc[0])
                     tgt_cls = (src_cls + 1) % self.num_classes
 
-                # Calculate actual source-class sample count modified by the attack
-                source_indices = np.where(yc == src_cls)[0]
-                flipped_count = len(source_indices)
-
-                yc = apply_label_flipping_attack(
-                    yc, source_class=src_cls, target_class=tgt_cls, flip_ratio=1.0, seed=self.seed
+                yc, flipped_count = apply_targeted_label_flipping_attack(
+                    yc, source_class=src_cls, target_class=tgt_cls, flip_ratio=self.label_flip_ratio, seed=self.seed
                 )
-                print(f"  [Attack Setup] Label-Flip injected on Client {cid}: {src_cls} -> {tgt_cls} ({flipped_count} samples)")
+                print(f"  [Attack Setup] Label-Flip injected on Client {cid}: {src_cls} -> {tgt_cls} ({flipped_count} samples, ratio={self.label_flip_ratio})")
 
                 # Telemetry logging: record only if samples were actually modified
                 if flipped_count > 0:
@@ -312,10 +337,11 @@ class FederatedOrchestrator:
                         "round": 0,
                         "phase": "setup",
                         "client_id": cid,
-                        "attack_type": "label_flip",
+                        "attack_type": self.attack_type,
                         "source_class": int(src_cls),
                         "target_class": int(tgt_cls),
-                        "flipped_samples": int(flipped_count)
+                        "flipped_samples": int(flipped_count),
+                        "flip_ratio": float(self.label_flip_ratio)
                     })
 
             client = FederatedClient(
@@ -347,6 +373,9 @@ class FederatedOrchestrator:
             norm_threshold_factor=self.norm_threshold_factor,
             cosine_threshold=self.cosine_threshold,
             loss_increase_threshold=self.loss_increase_threshold,
+            enable_norm_check=self.enable_norm_check,
+            enable_cosine_check=self.enable_cosine_check,
+            enable_loss_check=self.enable_loss_check,
             device=self.device
         )
 
@@ -378,7 +407,7 @@ class FederatedOrchestrator:
 
         # ---- Step A: Local Training ----
         for client in self.clients:
-            if self.reputation_mgr.is_quarantined(client.client_id):
+            if self.enable_quarantine and self.reputation_mgr.is_quarantined(client.client_id):
                 continue
 
             client.set_global_weights(current_global_weights)
@@ -397,14 +426,43 @@ class FederatedOrchestrator:
             # Apply model poisoning (non-label-flip attacks)
             if (self.attack_enabled
                     and client.client_id in self.malicious_client_ids
-                    and self.attack_type != "label_flip"):
-                attack_fn = ATTACK_REGISTRY.get(self.attack_type)
-                if attack_fn:
-                    weights = attack_fn(weights, self.seed + r)
+                    and self.attack_type not in ("label_flip", "targeted_label_flip")):
+                if self.attack_type == "adaptive_byzantine":
+                    weights = generate_adaptive_byzantine_update(
+                        honest_weights=weights,
+                        global_weights=current_global_weights,
+                        norm_threshold_factor=self.norm_threshold_factor,
+                        cosine_threshold=self.cosine_threshold,
+                        loss_headroom=self.adaptive_loss_headroom,
+                        stealth_factor=self.adaptive_stealth_factor,
+                        seed=self.seed + r
+                    )
                     self.attack_log.append({
                         "round": r, "client_id": client.client_id,
-                        "attack_type": self.attack_type
+                        "attack_type": "adaptive_byzantine",
+                        "stealth_factor": self.adaptive_stealth_factor
                     })
+                elif self.attack_type == "sybil_coalition":
+                    sybil_dict = generate_sybil_coalition_updates(
+                        base_weights=current_global_weights,
+                        coalition_client_ids=[client.client_id],
+                        intensity=self.sybil_intensity,
+                        seed=self.seed + r
+                    )
+                    weights = sybil_dict[client.client_id]
+                    self.attack_log.append({
+                        "round": r, "client_id": client.client_id,
+                        "attack_type": "sybil_coalition",
+                        "intensity": self.sybil_intensity
+                    })
+                else:
+                    attack_fn = ATTACK_REGISTRY.get(self.attack_type)
+                    if attack_fn:
+                        weights = attack_fn(weights, self.seed + r)
+                        self.attack_log.append({
+                            "round": r, "client_id": client.client_id,
+                            "attack_type": self.attack_type
+                        })
 
             # ECDSA digital signature on weight hash
             w_hash = CryptoManager.sha256_hash(weights.tobytes().hex())
@@ -414,18 +472,37 @@ class FederatedOrchestrator:
             client_signatures[client.client_id]  = sig
             sample_counts[client.client_id]       = client.num_samples
 
-        # ---- Step B: Trust Validation & Blockchain Recording ----
+        # ---- Step B: Cryptographic Verification & Trust Validation ----
+        sig_verified_cids: List[int] = []
+        sig_rejected_cids: List[int] = []
+        for cid, w in client_raw_weights.items():
+            if self.enable_signature_verify:
+                w_hash = CryptoManager.sha256_hash(w.tobytes().hex())
+                pub_k = self.client_keys[cid][1]
+                if CryptoManager.verify_signature(pub_k, w_hash, client_signatures[cid]):
+                    sig_verified_cids.append(cid)
+                else:
+                    sig_rejected_cids.append(cid)
+                    print(f"  [🚨 Crypto Alert] Round {r}: Client {cid} rejected due to INVALID SIGNATURE")
+            else:
+                sig_verified_cids.append(cid)
+
+        candidate_weights = {cid: client_raw_weights[cid] for cid in sig_verified_cids}
+
         accepted_weights: List[np.ndarray] = []
         accepted_counts:  List[int]        = []
         accepted_reps:    List[float]      = []
-        rejected_cids:    List[int]        = []
+        rejected_cids:    List[int]        = list(sig_rejected_cids)
         validation_reports: Dict[int, Dict] = {}
 
-        if self.defense_enabled and len(client_raw_weights) > 1:
+        defense_active = self.enable_trust_engine and len(candidate_weights) > 1
+
+        if defense_active:
             validation_reports = self.trust_engine.evaluate_updates(
-                client_raw_weights, current_global_weights, val_data
+                candidate_weights, current_global_weights, val_data
             )
-            self.reputation_mgr.update_reputation(validation_reports)
+            if self.enable_reputation:
+                self.reputation_mgr.update_reputation(validation_reports)
 
             for cid, report in validation_reports.items():
                 is_valid = report["is_valid"]
@@ -434,22 +511,23 @@ class FederatedOrchestrator:
                 rep_before = rep_history[-2] if len(rep_history) >= 2 else 1.0
                 rep_after  = self.reputation_mgr.reputations[cid]
 
-                tx = Transaction(
-                    client_id=cid,
-                    round_num=r,
-                    weights_hash=CryptoManager.sha256_hash(
-                        client_raw_weights[cid].tobytes().hex()
-                    ),
-                    signature=client_signatures[cid],
-                    validation_metrics=report,
-                    status=status_str,
-                    reputation_before=rep_before,
-                    reputation_after=rep_after
-                )
-                self.blockchain.add_transaction(tx)
+                if self.enable_blockchain:
+                    tx = Transaction(
+                        client_id=cid,
+                        round_num=r,
+                        weights_hash=CryptoManager.sha256_hash(
+                            candidate_weights[cid].tobytes().hex()
+                        ),
+                        signature=client_signatures[cid],
+                        validation_metrics=report,
+                        status=status_str,
+                        reputation_before=rep_before,
+                        reputation_after=rep_after
+                    )
+                    self.blockchain.add_transaction(tx)
 
                 if is_valid:
-                    accepted_weights.append(client_raw_weights[cid])
+                    accepted_weights.append(candidate_weights[cid])
                     accepted_counts.append(sample_counts[cid])
                     accepted_reps.append(rep_after)
                 else:
@@ -459,20 +537,20 @@ class FederatedOrchestrator:
                         f"| Reason: {report['reason'][:80]}"
                     )
 
-            # Proof-of-Trust block mining
-            validator_id = self.blockchain.select_validator(
-                self.reputation_mgr.get_all_reputations()
-            )
-            new_block_hash = CryptoManager.sha256_hash(
-                self.server.get_global_weights_hash() + f"_round_{r}"
-            )
-            self.blockchain.forge_block(
-                global_model_hash=new_block_hash, validator_id=validator_id
-            )
+            if self.enable_blockchain:
+                validator_id = self.blockchain.select_validator(
+                    self.reputation_mgr.get_all_reputations()
+                )
+                new_block_hash = CryptoManager.sha256_hash(
+                    self.server.get_global_weights_hash() + f"_round_{r}"
+                )
+                self.blockchain.forge_block(
+                    global_model_hash=new_block_hash, validator_id=validator_id
+                )
         else:
-            # No defense: accept all updates naively
-            for cid, w in client_raw_weights.items():
-                accepted_weights.append(w)
+            # Trust defense disabled: accept all signature-verified updates naively
+            for cid in sig_verified_cids:
+                accepted_weights.append(candidate_weights[cid])
                 accepted_counts.append(sample_counts[cid])
                 accepted_reps.append(1.0)
 
@@ -492,10 +570,35 @@ class FederatedOrchestrator:
                 new_weights = aggregate_fedavg(accepted_weights, accepted_counts)
             self.server.set_global_weights(new_weights)
 
-        # ---- Step D: Global Evaluation ----
+        # ---- Step D: Global Evaluation & Stage 2D Metrics ----
         eval_bs = min(self.batch_size, len(self.X_test)) if len(self.X_test) > 0 else 32
         eval_metrics = self.server.evaluate(self.X_test, self.y_test, batch_size=eval_bs)
         round_duration = time.time() - round_t0
+
+        # Predictions for ASR and clean accuracy
+        y_preds = eval_metrics.get("predictions", None)
+        if y_preds is None and len(self.X_test) > 0:
+            y_preds = self.server.predict(self.X_test, batch_size=eval_bs)
+        else:
+            y_preds = np.array(y_preds) if y_preds is not None else np.array([])
+
+        if self.attack_type in ("label_flip", "targeted_label_flip") and len(self.X_test) > 0:
+            asr = compute_attack_success_rate(self.y_test, y_preds, self.label_flip_source, self.label_flip_target)
+            clean_acc = compute_clean_accuracy(self.y_test, y_preds, self.label_flip_source)
+        else:
+            asr = 0.0
+            clean_acc = eval_metrics["accuracy"]
+
+        active_cids = list(client_raw_weights.keys())
+        submitted_malicious = [cid for cid in active_cids if cid in self.malicious_client_ids]
+        submitted_honest = [cid for cid in active_cids if cid not in self.malicious_client_ids]
+
+        mudr = compute_mudr(rejected_cids, submitted_malicious) if len(submitted_malicious) > 0 else 1.0
+        murr = compute_murr(rejected_cids, submitted_malicious) if len(submitted_malicious) > 0 else 1.0
+        fpr = compute_fpr(rejected_cids, submitted_honest) if len(submitted_honest) > 0 else 0.0
+        puaa = compute_puaa(rejected_cids, submitted_malicious) if len(submitted_malicious) > 0 else 0.0
+        quarantined_count = len([cid for cid in range(self.num_clients) if self.reputation_mgr.is_quarantined(cid)])
+        degradation = max(0.0, (self.clean_baseline_acc - eval_metrics["accuracy"])) if self.clean_baseline_acc is not None else 0.0
 
         # Build reputation snapshot
         rep_snapshot = {
@@ -506,6 +609,14 @@ class FederatedOrchestrator:
         round_record = {
             "round": r,
             "accuracy": eval_metrics["accuracy"],
+            "clean_accuracy": clean_acc,
+            "asr": asr,
+            "mudr": mudr,
+            "murr": murr,
+            "fpr": fpr,
+            "puaa": puaa,
+            "quarantined_count": quarantined_count,
+            "performance_degradation": degradation,
             "precision": eval_metrics["precision"],
             "recall": eval_metrics["recall"],
             "f1_score": eval_metrics["f1_score"],
@@ -564,9 +675,18 @@ class FederatedOrchestrator:
         # Round 0 — initial evaluation (untrained global model)
         eval_bs = min(self.batch_size, len(self.X_test)) if len(self.X_test) > 0 else 32
         init_eval = self.server.evaluate(self.X_test, self.y_test, batch_size=eval_bs)
+        self.clean_baseline_acc = float(init_eval["accuracy"])
         self.round_logs = [{
             "round": 0,
             "accuracy": init_eval["accuracy"],
+            "clean_accuracy": init_eval["accuracy"],
+            "asr": 0.0,
+            "mudr": 1.0,
+            "murr": 1.0,
+            "fpr": 0.0,
+            "puaa": 0.0,
+            "quarantined_count": 0,
+            "performance_degradation": 0.0,
             "precision": init_eval["precision"],
             "recall":    init_eval["recall"],
             "f1_score":  init_eval["f1_score"],
@@ -629,6 +749,14 @@ class FederatedOrchestrator:
                 if k not in ("X_train", "y_train", "X_val", "y_val", "X_test", "y_test", "feature_names", "class_names", "val_data", "loader")
             },
             "final_accuracy":        final["accuracy"],
+            "final_clean_accuracy":  final.get("clean_accuracy", final["accuracy"]),
+            "final_asr":             final.get("asr", 0.0),
+            "final_mudr":            final.get("mudr", 1.0),
+            "final_murr":            final.get("murr", 1.0),
+            "final_fpr":             final.get("fpr", 0.0),
+            "final_puaa":            final.get("puaa", 0.0),
+            "final_quarantined_count": final.get("quarantined_count", 0),
+            "final_degradation":     final.get("performance_degradation", 0.0),
             "final_f1_score":        final["f1_score"],
             "final_precision":       final["precision"],
             "final_recall":          final["recall"],
@@ -644,6 +772,16 @@ class FederatedOrchestrator:
             "reputation_summary":    self.reputation_mgr.get_status_summary(),
             "chain_valid":           self.blockchain.is_chain_valid(),
             "xai_demo":              xai_demo,
+            "stage2d_metrics": {
+                "final_clean_accuracy": final.get("clean_accuracy", final["accuracy"]),
+                "final_asr": final.get("asr", 0.0),
+                "final_mudr": final.get("mudr", 1.0),
+                "final_murr": final.get("murr", 1.0),
+                "final_fpr": final.get("fpr", 0.0),
+                "final_puaa": final.get("puaa", 0.0),
+                "final_quarantined_count": final.get("quarantined_count", 0),
+                "final_degradation": final.get("performance_degradation", 0.0)
+            },
         }
 
         print(f"\n  ✅ Scenario Complete | "

@@ -169,7 +169,24 @@ class FederatedServer:
             "precision_macro": float(prec_macro),
             "recall_macro": float(rec_macro),
             "f1_score_macro": float(f1_macro),
-            "confusion_matrix": cm
+            "confusion_matrix": cm,
+            "predictions": all_preds
         }
         self.round_history.append(eval_result)
         return eval_result
+
+    def predict(self, X: np.ndarray, batch_size: int = 128) -> np.ndarray:
+        """
+        Generates class predictions for an input array using the current global model.
+        """
+        self.global_model.eval()
+        dataset = TensorDataset(torch.from_numpy(X.astype(np.float32)))
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        all_preds = []
+        with torch.no_grad():
+            for (X_batch,) in dataloader:
+                X_batch = X_batch.to(self.device)
+                outputs = self.global_model(X_batch)
+                preds = torch.argmax(outputs, dim=1).cpu().numpy()
+                all_preds.extend(preds)
+        return np.array(all_preds, dtype=np.int64)

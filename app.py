@@ -29,8 +29,14 @@ from src.data.partitioner import FederatedPartitioner
 from src.models.ids_net import IDSNet
 from src.federated.client import FederatedClient
 from src.federated.server import FederatedServer
+from src.federated.orchestrator import FederatedOrchestrator
 from src.attacks.model_poisoning import apply_gaussian_noise_attack, apply_sign_flipping_attack
 from src.attacks.data_poisoning import apply_label_flipping_attack
+from src.attacks.targeted_poisoning import (
+    apply_targeted_label_flipping_attack, compute_attack_success_rate, compute_clean_accuracy
+)
+from src.attacks.sybil_coalition import generate_sybil_coalition_updates, evaluate_median_distortion
+from src.attacks.adaptive_byzantine import generate_adaptive_byzantine_update, verify_evasion_criteria
 from src.trust.evaluator import MultiCriteriaTrustEngine
 from src.trust.reputation import ReputationManager
 from src.blockchain.crypto import CryptoManager
@@ -478,42 +484,108 @@ elif section == "⚙️ 2. FL & Defense Studio":
             "Select Scenario Preset",
             [
                 "🟢 Scenario 1: Honest Baseline (FedAvg)",
-                "🚨 Scenario 2: Gaussian Noise Poisoning (Gradient Explosion)",
-                "🔄 Scenario 3: Sign-Flipping Attack (Directional Inversion)",
-                "🔒 Scenario 4: Privacy Perturbation (L2-Clipped Gaussian Noise)"
+                "🎯 Scenario 2: Targeted Label-Flipping Attack (DoS -> Normal)",
+                "👥 Scenario 3: Sybil Coalition Attack (Coordinated Median Distortion)",
+                "🥷 Scenario 4: Adaptive Byzantine Perturbation (Tier Evasion & Drift)",
+                "🚨 Scenario 5: Gaussian Noise Poisoning (Gradient Explosion)",
+                "🔄 Scenario 6: Sign-Flipping Attack (Directional Inversion)",
+                "🔒 Scenario 7: Privacy Perturbation (L2-Clipped Gaussian Noise)"
             ]
         )
 
         num_rounds = st.slider("Simulation Rounds", min_value=1, max_value=5, value=2)
         defense_active = st.toggle("Enable Multi-Criteria Trust & Blockchain Defense", value=True)
 
-        # Map scenario choices to parameters
+        # Dynamic parameter controls depending on scenario
+        flip_source = 1 if num_classes > 1 else 0
+        flip_target = 0
+        flip_ratio = 1.0
+        sybil_nodes = [2, 3]
+        sybil_intensity = 2.5
+        stealth_factor = 0.8
+        loss_headroom = 0.5
+        malicious_cids = [3]
+        dp_active = False
+
         if "Scenario 1" in scenario_choice:
             atk_enabled = False
             atk_type = "none"
-            dp_active = False
             explanation_txt = "All 5 nodes submit authentic local training updates without adversarial perturbation."
         elif "Scenario 2" in scenario_choice:
             atk_enabled = True
-            atk_type = "gaussian_noise"
-            dp_active = False
-            explanation_txt = "Node 3 injects high-variance Gaussian noise (std=2.5) to blow up parameter weights."
+            atk_type = "targeted_label_flip"
+            malicious_cids = [3]
+            st.markdown("**Targeted Label-Flipping Hyperparameters:**")
+            col_f1, col_f2, col_f3 = st.columns(3)
+            with col_f1:
+                flip_source = st.selectbox("Source Class", options=list(range(num_classes)), index=1 if num_classes > 1 else 0)
+            with col_f2:
+                flip_target = st.selectbox("Target Class", options=list(range(num_classes)), index=0)
+            with col_f3:
+                flip_ratio = st.slider("Flip Ratio", min_value=0.1, max_value=1.0, value=1.0, step=0.1)
+            explanation_txt = f"Node 3 poisons local dataset flipping class {flip_source} to {flip_target} (ratio={flip_ratio}) to blind the IDS model."
         elif "Scenario 3" in scenario_choice:
             atk_enabled = True
+            atk_type = "sybil_coalition"
+            st.markdown("**Sybil Coalition Hyperparameters:**")
+            col_sy1, col_sy2 = st.columns(2)
+            with col_sy1:
+                sybil_nodes = st.multiselect("Coalition Nodes", options=list(range(num_clients)), default=[2, 3])
+            with col_sy2:
+                sybil_intensity = st.slider("Intensity (γ)", min_value=0.5, max_value=5.0, value=2.5, step=0.5)
+            malicious_cids = sybil_nodes if sybil_nodes else [3]
+            explanation_txt = f"Nodes {malicious_cids} coordinate identical inverted updates (intensity={sybil_intensity}) to drag the peer-median aggregate."
+        elif "Scenario 4" in scenario_choice:
+            atk_enabled = True
+            atk_type = "adaptive_byzantine"
+            malicious_cids = [3]
+            st.markdown("**Adaptive Stealth Hyperparameters:**")
+            col_ab1, col_ab2 = st.columns(2)
+            with col_ab1:
+                stealth_factor = st.slider("Stealth Factor (λ)", min_value=0.1, max_value=0.95, value=0.8, step=0.05,
+                                           help="Higher values keep updates closer to peer consensus to evade detection.")
+            with col_ab2:
+                loss_headroom = st.slider("Loss Headroom", min_value=0.1, max_value=1.0, value=0.5, step=0.1)
+            explanation_txt = "Node 3 dynamically bounds its L2 norm and aligns cosine direction to consensus, attempting stealthy boundary drift."
+        elif "Scenario 5" in scenario_choice:
+            atk_enabled = True
+            atk_type = "gaussian_noise"
+            malicious_cids = [3]
+            explanation_txt = "Node 3 injects high-variance Gaussian noise (std=2.5) to blow up parameter weights."
+        elif "Scenario 6" in scenario_choice:
+            atk_enabled = True
             atk_type = "sign_flip"
-            dp_active = False
+            malicious_cids = [3]
             explanation_txt = "Node 3 inverts parameter signs (scale=-3.0) to deliberately sabotage decision boundaries."
         else:
             atk_enabled = False
             atk_type = "none"
             dp_active = True
+            malicious_cids = []
             explanation_txt = "Nodes perturb updates locally with L2 clipping (C=1.0) and Gaussian noise without formal accounting."
 
         st.caption(f"**Scenario Behavior:** {explanation_txt}")
 
+        # Dynamic Defense Matrix Panel
+        with st.expander("🛡️ Dynamic Defense Matrix Configuration", expanded=True):
+            col_d1, col_d2 = st.columns(2)
+            with col_d1:
+                agg_options = ["Trust-Weighted", "FedAvg", "Trimmed Mean", "Median"]
+                default_agg_idx = 0 if defense_active else 1
+                agg_algo_str = st.selectbox("Aggregation Strategy", agg_options, index=default_agg_idx)
+                agg_algo = agg_algo_str.lower().replace("-", "_").replace(" ", "_")
+                tier1_norm = st.checkbox("Tier 1: L2-Norm Bounding", value=defense_active)
+                tier2_cos = st.checkbox("Tier 2: Cosine Consensus", value=defense_active)
+                tier3_loss = st.checkbox("Tier 3: Validation Loss Delta", value=defense_active)
+            with col_d2:
+                rep_slashing = st.checkbox("Asymmetric Reputation Slashing", value=defense_active)
+                quarantine_ctrl = st.checkbox("Autonomous Quarantine & Probation", value=defense_active)
+                sig_verify = st.checkbox("ECDSA Cryptographic Signature Verification", value=True)
+                ledger_mining = st.checkbox("Proof-of-Trust Blockchain Ledger", value=defense_active)
+
     with col_exec:
         st.subheader("2. Execute Simulation")
-        st.markdown("Click below to run PyTorch federated training with active trust inspection and ledger mining:")
+        st.markdown("Run the federated scenario with configured adversarial injection and dynamic defense matrix:")
 
         run_btn = st.button("▶ Run Federated Simulation", type="primary")
 
@@ -521,143 +593,122 @@ elif section == "⚙️ 2. FL & Defense Studio":
             with st.spinner("Executing federated rounds with PyTorch neural network..."):
                 batch_sz = 128 if len(X_train) > 1000 else max(8, min(32, len(X_train) // 10))
 
-                partitioner = FederatedPartitioner(num_clients=5, non_iid=True, alpha=0.5, seed=42)
-                splits = partitioner.partition(X_train, y_train)
+                orch_config = {
+                    "scenario_name": scenario_choice,
+                    "track": active_data["track"],
+                    "dataset": active_data["name"],
+                    "seed": 42,
+                    "device": device,
+                    "num_clients": num_clients,
+                    "num_rounds": num_rounds,
+                    "local_epochs": 1,
+                    "batch_size": batch_sz,
+                    "lr": 0.002,
+                    "aggregation_algorithm": agg_algo,
+                    "attack_enabled": atk_enabled,
+                    "attack_type": atk_type,
+                    "malicious_client_ids": malicious_cids,
+                    "label_flip_source": flip_source,
+                    "label_flip_target": flip_target,
+                    "label_flip_ratio": flip_ratio,
+                    "sybil_intensity": sybil_intensity,
+                    "adaptive_stealth_factor": stealth_factor,
+                    "adaptive_loss_headroom": loss_headroom,
+                    "defense_enabled": defense_active,
+                    "dp_enabled": dp_active,
+                    "defense_matrix": {
+                        "trust_engine": defense_active,
+                        "norm_check": tier1_norm,
+                        "cosine_check": tier2_cos,
+                        "loss_check": tier3_loss,
+                        "reputation": rep_slashing,
+                        "quarantine": quarantine_ctrl,
+                        "signature_verify": sig_verify,
+                        "blockchain": ledger_mining,
+                    },
+                    "X_train": X_train.copy(),
+                    "y_train": y_train.copy(),
+                    "X_val": X_val.copy(),
+                    "y_val": y_val.copy(),
+                    "X_test": X_test.copy(),
+                    "y_test": y_test.copy(),
+                    "feature_names": feature_names,
+                    "class_names": class_names,
+                    "num_classes": num_classes,
+                    "input_dim": input_dim
+                }
 
-                clients = []
-                client_keys = {}
-                for cid in range(5):
-                    Xc, yc = splits[cid]
-                    client = FederatedClient(client_id=cid, client_name=f"Node-{cid}", X_local=Xc, y_local=yc, input_dim=input_dim, num_classes=num_classes, device=device, seed=42 + cid)
-                    clients.append(client)
-                    priv, pub = CryptoManager.generate_keypair()
-                    client_keys[cid] = (priv, pub)
+                orch = FederatedOrchestrator(orch_config)
+                results = orch.run()
 
-                trust_engine = MultiCriteriaTrustEngine(input_dim=input_dim, num_classes=num_classes, device=device)
-                # Strict 3-Way Isolation: Trust validation benchmark is derived exclusively from training data
-                val_data = (X_val, y_val)
+                # Sync back to global session state for cross-dashboard tabs
+                st.session_state.server = orch.server
+                st.session_state.reputation_mgr = orch.reputation_mgr
+                st.session_state.blockchain = orch.blockchain
 
-                progress_bar = st.progress(0)
-                status_placeholder = st.empty()
-
-                step_storyboard = []
-
-                for r in range(1, num_rounds + 1):
-                    current_weights = st.session_state.server.get_global_weights()
-                    client_weights_dict = {}
-                    client_signatures = {}
-                    sample_counts = {}
-
-                    # Step 1: Baseline before round
-                    eval_pre = st.session_state.server.evaluate(X_test, y_test, batch_size=batch_sz)
-
-                    # Step 2: Client Training & Attack Injection
-                    for client in clients:
-                        if st.session_state.reputation_mgr.is_quarantined(client.client_id):
-                            continue
-                        client.set_global_weights(current_weights)
-                        client.local_train(epochs=1, batch_size=batch_sz, lr=0.002, fedprox_mu=0.0, global_weights=current_weights)
-                        w = client.get_local_weights()
-
-                        if dp_active:
-                            dp_eng = LocalDifferentialPrivacy(clip_norm=1.0, noise_multiplier=0.01)
-                            w, _ = dp_eng.privatize(w)
-
-                        if atk_enabled and client.client_id == 3:
-                            if atk_type == "gaussian_noise":
-                                w = apply_gaussian_noise_attack(w, std=2.5)
-                            elif atk_type == "sign_flip":
-                                w = apply_sign_flipping_attack(w, scale=-3.0)
-
-                        w_hash = CryptoManager.sha256_hash(w.tobytes().hex())
-                        sig = CryptoManager.sign_message(client_keys[client.client_id][0], w_hash)
-
-                        client_weights_dict[client.client_id] = w
-                        client_signatures[client.client_id] = sig
-                        sample_counts[client.client_id] = client.num_samples
-
-                    # Step 3 & 4: Trust Inspection & Defense Action
-                    accepted_weights, accepted_counts, accepted_reps = [], [], []
-                    rejected_cids = []
-
-                    if defense_active and len(client_weights_dict) > 1:
-                        val_reports = trust_engine.evaluate_updates(client_weights_dict, current_weights, val_data)
-                        st.session_state.reputation_mgr.update_reputation(val_reports)
-
-                        for cid, rep_res in val_reports.items():
-                            is_val = rep_res["is_valid"]
-                            stat = "ACCEPTED" if is_val else "REJECTED"
-                            rep_hist = st.session_state.reputation_mgr.reputation_history[cid]
-                            rep_before = rep_hist[-2] if len(rep_hist) >= 2 else 1.0
-                            rep_after = st.session_state.reputation_mgr.reputations[cid]
-
-                            tx = Transaction(
-                                client_id=cid, round_num=st.session_state.server.current_round + 1,
-                                weights_hash=CryptoManager.sha256_hash(client_weights_dict[cid].tobytes().hex()),
-                                signature=client_signatures[cid], validation_metrics=rep_res,
-                                status=stat, reputation_before=rep_before, reputation_after=rep_after
-                            )
-                            st.session_state.blockchain.add_transaction(tx)
-
-                            if is_val:
-                                accepted_weights.append(client_weights_dict[cid])
-                                accepted_counts.append(sample_counts[cid])
-                                accepted_reps.append(rep_after)
-                            else:
-                                rejected_cids.append(cid)
-                                st.session_state.recent_defense_events.append({
-                                    "round": st.session_state.server.current_round + 1,
-                                    "event": f"Adversarial update from Node-{cid} REJECTED ({rep_res['reason'][:60]}). Reputation slashed.",
-                                    "severity": "alert"
-                                })
-
-                        v_id = st.session_state.blockchain.select_validator(st.session_state.reputation_mgr.get_all_reputations())
-                        st.session_state.blockchain.forge_block(global_model_hash="global_hash", validator_id=v_id)
-                    else:
-                        for cid, w in client_weights_dict.items():
-                            accepted_weights.append(w)
-                            accepted_counts.append(sample_counts[cid])
-                            accepted_reps.append(1.0)
-
-                    # Step 5: Aggregation & Recovery
-                    if len(accepted_weights) > 0:
-                        from src.federated.aggregators import aggregate_fedavg, aggregate_trust_weighted
-                        new_w = aggregate_trust_weighted(accepted_weights, accepted_counts, accepted_reps) if defense_active else aggregate_fedavg(accepted_weights, accepted_counts)
-                        st.session_state.server.set_global_weights(new_w)
-
-                    eval_metrics = st.session_state.server.evaluate(X_test, y_test, batch_size=batch_sz)
-                    round_num = st.session_state.server.current_round
-
+                for r_record in results["round_history"][1:]:
                     st.session_state.simulation_history.append({
-                        "round": round_num,
-                        "accuracy": eval_metrics["accuracy"] * 100,
-                        "f1_score": eval_metrics["f1_score"],
-                        "loss": eval_metrics["loss"],
-                        "rejected": len(rejected_cids),
+                        "round": r_record["round"],
+                        "accuracy": r_record["accuracy"] * 100,
+                        "clean_accuracy": r_record.get("clean_accuracy", r_record["accuracy"]) * 100,
+                        "asr": r_record.get("asr", 0.0) * 100,
+                        "mudr": r_record.get("mudr", 1.0) * 100,
+                        "murr": r_record.get("murr", 1.0) * 100,
+                        "fpr": r_record.get("fpr", 0.0) * 100,
+                        "f1_score": r_record["f1_score"],
+                        "loss": r_record["loss"],
+                        "rejected": r_record["num_rejected"],
                         "defense": defense_active
                     })
+                    if r_record["num_rejected"] > 0:
+                        st.session_state.recent_defense_events.append({
+                            "round": r_record["round"],
+                            "event": f"Adversarial update from Node(s) {r_record['rejected_client_ids']} REJECTED. Reputation slashed.",
+                            "severity": "alert"
+                        })
 
-                    progress_bar.progress(r / num_rounds)
-                    status_placeholder.write(f"Round {r}/{num_rounds} Finished: Global Accuracy = **{eval_metrics['accuracy']*100:.2f}%**")
-
-                    # Record Storyboard Snapshot
-                    step_storyboard.append({
-                        "round": round_num,
-                        "baseline_acc": eval_pre["accuracy"] * 100,
-                        "final_acc": eval_metrics["accuracy"] * 100,
-                        "attack_type": atk_type,
-                        "rejected": rejected_cids,
-                        "defense": defense_active
-                    })
-
-                st.session_state.last_storyboard = step_storyboard[-1]
+                last_r = results["round_history"][-1]
+                st.session_state.last_storyboard = {
+                    "round": last_r["round"],
+                    "baseline_acc": results["round_history"][0]["accuracy"] * 100,
+                    "final_acc": last_r["accuracy"] * 100,
+                    "clean_acc": last_r.get("clean_accuracy", last_r["accuracy"]) * 100,
+                    "asr": last_r.get("asr", 0.0) * 100,
+                    "mudr": last_r.get("mudr", 1.0) * 100,
+                    "murr": last_r.get("murr", 1.0) * 100,
+                    "fpr": last_r.get("fpr", 0.0) * 100,
+                    "puaa": last_r.get("puaa", 0.0) * 100,
+                    "attack_type": atk_type,
+                    "rejected": last_r["rejected_client_ids"],
+                    "defense": defense_active,
+                    "aggregation": agg_algo
+                }
+                st.session_state.last_stage2d_metrics = results.get("stage2d_metrics", {})
                 st.success("✅ Simulation completed successfully!")
+
+    # Stage 2D Headline Metrics
+    if hasattr(st.session_state, "last_storyboard") and st.session_state.last_storyboard:
+        sb = st.session_state.last_storyboard
+        st.markdown("### 📊 Stage 2D Multi-Attack Defense Evaluation Metrics")
+        m1, m2, m3, m4, m5, m6 = st.columns(6)
+        with m1:
+            st.metric("Global Accuracy", f"{sb['final_acc']:.2f}%", delta=f"{sb['final_acc'] - sb['baseline_acc']:+.2f}%")
+        with m2:
+            st.metric("Clean Accuracy", f"{sb['clean_acc']:.2f}%")
+        with m3:
+            st.metric("Attack Success Rate (ASR)", f"{sb['asr']:.1f}%")
+        with m4:
+            st.metric("Malicious Detection (MUDR)", f"{sb['mudr']:.1f}%")
+        with m5:
+            st.metric("Malicious Rejection (MURR)", f"{sb['murr']:.1f}%")
+        with m6:
+            st.metric("False-Positive Rate (FPR)", f"{sb['fpr']:.1f}%")
 
     # 5-Step Defense & Recovery Storyboard Visualization
     st.markdown("---")
     st.subheader("🎬 The 5-Step Defense & Recovery Storyboard")
 
-    sb = st.session_state.last_storyboard
+    sb = getattr(st.session_state, "last_storyboard", None)
     if sb:
         atk_name = sb["attack_type"].replace("_", " ").title() if sb["attack_type"] != "none" else "None (Honest)"
         rej_count = len(sb["rejected"])
@@ -676,9 +727,9 @@ elif section == "⚙️ 2. FL & Defense Studio":
             st.markdown("""<div class="story-step"><b>Step 5: Recovery</b><br><small>Post-round accuracy:</small><br><b>""" + f"{sb['final_acc']:.2f}%" + """</b></div>""", unsafe_allow_html=True)
 
         if rej_count > 0:
-            st.success(f"🛡️ **Defense Outcome:** Malicious update from Node {sb['rejected']} was intercepted and excluded. Model accuracy maintained at **{sb['final_acc']:.2f}%**.")
+            st.success(f"🛡️ **Defense Outcome:** Malicious update from Node(s) {sb['rejected']} was intercepted and excluded. Model accuracy maintained at **{sb['final_acc']:.2f}%** (Clean Acc: **{sb['clean_acc']:.2f}%**, ASR: **{sb['asr']:.1f}%**).")
         elif sb["attack_type"] != "none" and not sb["defense"]:
-            st.error(f"⚠️ **Undefended Outcome:** Malicious {atk_name} update was blindly aggregated into the global model, destabilizing model convergence.")
+            st.error(f"⚠️ **Undefended Outcome:** Malicious {atk_name} update was blindly aggregated into the global model (ASR: **{sb['asr']:.1f}%**, Acc: **{sb['final_acc']:.2f}%**).")
         else:
             st.info(f"✅ **Honest Convergence:** All participants submitted valid updates. Model accuracy is **{sb['final_acc']:.2f}%**.")
     else:
@@ -689,7 +740,8 @@ elif section == "⚙️ 2. FL & Defense Studio":
         if st.session_state.simulation_history:
             df_hist = pd.DataFrame(st.session_state.simulation_history)
             st.dataframe(df_hist, use_container_width=True)
-            fig_hist = px.line(df_hist, x="round", y="accuracy", markers=True, title="Global Model Test Accuracy Over Rounds", template="plotly_dark")
+            y_cols = [c for c in ["accuracy", "clean_accuracy", "asr"] if c in df_hist.columns]
+            fig_hist = px.line(df_hist, x="round", y=y_cols, markers=True, title="Global Model Test Accuracy & Metrics Over Rounds", template="plotly_dark")
             st.plotly_chart(fig_hist, use_container_width=True)
         else:
             st.write("No simulation history recorded in this session yet.")

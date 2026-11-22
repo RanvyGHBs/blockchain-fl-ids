@@ -6,7 +6,8 @@ Provides robust handling for missing, malformed, or incomplete results.
 
 import os
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+import numpy as np
 
 
 def compute_research_headline_metrics(
@@ -209,4 +210,123 @@ def _build_unavailable_response(reason: str) -> Dict[str, Any]:
             "overhead_display": "N/A",
             "summary": f"Cryptographic integrity metric unavailable: {reason}."
         }
+    }
+
+
+# -----------------------------------------------------------------------------
+# Stage 2D: Multi-Attack & Advanced Defense Evaluation Metrics
+# -----------------------------------------------------------------------------
+
+def compute_mudr(
+    flagged_client_ids: List[int],
+    submitted_malicious_cids: List[int]
+) -> float:
+    """
+    Malicious Update Detection Rate (MUDR):
+        MUDR = (Number of Malicious Updates Flagged by Defense) / (Total Malicious Updates Submitted)
+    """
+    if len(submitted_malicious_cids) == 0:
+        return 1.0  # Perfect score if no malicious updates submitted
+
+    flagged_set = set(flagged_client_ids)
+    detected_malicious = sum(1 for cid in submitted_malicious_cids if cid in flagged_set)
+    return float(detected_malicious / len(submitted_malicious_cids))
+
+
+def compute_murr(
+    rejected_client_ids: List[int],
+    submitted_malicious_cids: List[int]
+) -> float:
+    """
+    Malicious Update Rejection Rate (MURR):
+        MURR = (Number of Malicious Updates Rejected from Aggregation) / (Total Malicious Updates Submitted)
+    """
+    if len(submitted_malicious_cids) == 0:
+        return 1.0
+
+    rejected_set = set(rejected_client_ids)
+    rejected_malicious = sum(1 for cid in submitted_malicious_cids if cid in rejected_set)
+    return float(rejected_malicious / len(submitted_malicious_cids))
+
+
+def compute_fpr(
+    rejected_client_ids: List[int],
+    submitted_honest_cids: List[int]
+) -> float:
+    """
+    False-Positive Rate (FPR):
+        FPR = (Number of Honest Updates Erroneously Rejected) / (Total Honest Updates Submitted)
+    """
+    if len(submitted_honest_cids) == 0:
+        return 0.0
+
+    rejected_set = set(rejected_client_ids)
+    false_positives = sum(1 for cid in submitted_honest_cids if cid in rejected_set)
+    return float(false_positives / len(submitted_honest_cids))
+
+
+def compute_puaa(
+    rejected_client_ids: List[int],
+    submitted_malicious_cids: List[int]
+) -> float:
+    """
+    Poisoned Updates Accepted into Aggregation (PUAA):
+        PUAA = (Number of Malicious Updates Accepted into Aggregation) / (Total Malicious Updates Submitted)
+        PUAA = 1.0 - MURR
+    """
+    return 1.0 - compute_murr(rejected_client_ids, submitted_malicious_cids)
+
+
+def compute_stage2d_defense_metrics(
+    eval_metrics: Dict[str, Any],
+    rejected_client_ids: List[int],
+    all_active_client_ids: List[int],
+    malicious_client_ids: List[int],
+    clean_baseline_acc: Optional[float] = None,
+    y_true: Optional[np.ndarray] = None,
+    y_pred: Optional[np.ndarray] = None,
+    source_class: Optional[int] = None,
+    target_class: Optional[int] = None,
+    quarantined_count: int = 0
+) -> Dict[str, Any]:
+    """
+    Computes standard Stage 2D multi-attack evaluation metrics package.
+    """
+    submitted_malicious = [cid for cid in all_active_client_ids if cid in malicious_client_ids]
+    submitted_honest = [cid for cid in all_active_client_ids if cid not in malicious_client_ids]
+
+    mudr = compute_mudr(rejected_client_ids, submitted_malicious)
+    murr = compute_murr(rejected_client_ids, submitted_malicious)
+    fpr = compute_fpr(rejected_client_ids, submitted_honest)
+    puaa = compute_puaa(rejected_client_ids, submitted_malicious)
+
+    # ASR and clean accuracy
+    asr = 0.0
+    clean_acc = eval_metrics.get("accuracy", 0.0)
+
+    if y_true is not None and y_pred is not None and source_class is not None and target_class is not None:
+        from src.attacks.targeted_poisoning import compute_attack_success_rate, compute_clean_accuracy
+        asr = compute_attack_success_rate(y_true, y_pred, source_class, target_class)
+        clean_acc = compute_clean_accuracy(y_true, y_pred, source_class)
+
+    curr_acc = eval_metrics.get("accuracy", 0.0)
+    degradation = (clean_baseline_acc - curr_acc) if clean_baseline_acc is not None else 0.0
+
+    return {
+        "accuracy": float(curr_acc),
+        "clean_accuracy": float(clean_acc),
+        "asr": float(asr),
+        "mudr": float(mudr),
+        "murr": float(murr),
+        "fpr": float(fpr),
+        "puaa": float(puaa),
+        "quarantined_count": int(quarantined_count),
+        "performance_degradation": float(max(0.0, degradation)),
+        "precision_macro": float(eval_metrics.get("precision_macro", eval_metrics.get("precision", 0.0))),
+        "recall_macro": float(eval_metrics.get("recall_macro", eval_metrics.get("recall", 0.0))),
+        "f1_score_macro": float(eval_metrics.get("f1_score_macro", eval_metrics.get("f1_score", 0.0))),
+        "precision_weighted": float(eval_metrics.get("precision", 0.0)),
+        "recall_weighted": float(eval_metrics.get("recall", 0.0)),
+        "f1_score_weighted": float(eval_metrics.get("f1_score", 0.0)),
+        "loss": float(eval_metrics.get("loss", 0.0))
     }

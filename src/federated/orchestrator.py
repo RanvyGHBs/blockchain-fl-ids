@@ -10,9 +10,16 @@ blockchain audit trails, and DP accounting records—suitable for academic repor
 import time
 import json
 import os
+import math
 from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
 import torch
+
+from src.config import (
+    ExecutionMode, PrivacyRandomnessMode, APPROVED_CLIP_NORM,
+    APPROVED_NOISE_MULTIPLIER, APPROVED_TARGET_DELTA,
+    LEGACY_UNCALIBRATED_NOISE_MULTIPLIER
+)
 
 from src.data.nsl_kdd import NSLKDDLoader
 from src.data.custom_loader import CustomDatasetLoader
@@ -122,10 +129,69 @@ class FederatedOrchestrator:
         self.enable_signature_verify = bool(defense_matrix.get("signature_verify", True))
         self.enable_blockchain = bool(defense_matrix.get("blockchain", self.defense_enabled))
 
+        # Execution Mode & Privacy Randomness Architecture (WP2.4)
+        mode_val = config.get("execution_mode", ExecutionMode.RESEARCH_SIMULATION)
+        if isinstance(mode_val, str):
+            try:
+                self.execution_mode = ExecutionMode(mode_val.upper())
+            except ValueError:
+                raise ValueError(
+                    f"Unsupported execution_mode: '{mode_val}'. "
+                    f"Must be one of {[m.value for m in ExecutionMode]}"
+                )
+        elif isinstance(mode_val, ExecutionMode):
+            self.execution_mode = mode_val
+        else:
+            raise ValueError(f"Invalid execution_mode type: {type(mode_val)}")
+
+        rand_val = config.get("privacy_randomness_mode")
+        if rand_val is not None:
+            if isinstance(rand_val, str):
+                try:
+                    self.privacy_randomness_mode = PrivacyRandomnessMode(rand_val.upper())
+                except ValueError:
+                    raise ValueError(
+                        f"Unsupported privacy_randomness_mode: '{rand_val}'. "
+                        f"Must be one of {[r.value for r in PrivacyRandomnessMode]}"
+                    )
+            elif isinstance(rand_val, PrivacyRandomnessMode):
+                self.privacy_randomness_mode = rand_val
+            else:
+                raise ValueError(f"Invalid privacy_randomness_mode type: {type(rand_val)}")
+        else:
+            if self.execution_mode in (ExecutionMode.RESEARCH_SIMULATION, ExecutionMode.DEPLOYMENT):
+                self.privacy_randomness_mode = PrivacyRandomnessMode.OS_CSPRNG
+            else:
+                self.privacy_randomness_mode = PrivacyRandomnessMode.DETERMINISTIC_TEST
+
+        # Security Invariant: Rejects insecure randomness in secure modes
+        if self.execution_mode in (ExecutionMode.RESEARCH_SIMULATION, ExecutionMode.DEPLOYMENT):
+            if self.privacy_randomness_mode != PrivacyRandomnessMode.OS_CSPRNG:
+                raise ValueError(
+                    f"Insecure randomness mode '{self.privacy_randomness_mode.value}' is strictly prohibited "
+                    f"in {self.execution_mode.value} mode. Mandatory randomness mode is OS_CSPRNG."
+                )
+
         self.dp_enabled = config.get("dp_enabled", False)
-        self.dp_clip_norm = float(config.get("dp_clip_norm", 1.0))
-        self.dp_noise_multiplier = float(config.get("dp_noise_multiplier", 0.01))
-        self.dp_target_delta = float(config.get("dp_target_delta", 1e-5))
+        self.dp_clip_norm = float(config.get("dp_clip_norm", APPROVED_CLIP_NORM))
+        self.dp_noise_multiplier = float(config.get("dp_noise_multiplier", APPROVED_NOISE_MULTIPLIER if self.dp_enabled else 0.01))
+        self.dp_target_delta = float(config.get("dp_target_delta", APPROVED_TARGET_DELTA))
+
+        # Security Invariant: Require sigma > 0 in secure execution modes when DP is enabled
+        if self.dp_enabled and self.execution_mode in (ExecutionMode.RESEARCH_SIMULATION, ExecutionMode.DEPLOYMENT):
+            if self.dp_noise_multiplier <= 0:
+                raise ValueError(
+                    f"dp_noise_multiplier must be strictly positive (sigma > 0) in {self.execution_mode.value} mode, "
+                    f"got {self.dp_noise_multiplier}. Zero-noise is strictly prohibited in secure privacy execution."
+                )
+
+        # Security Invariant: Reject legacy uncalibrated sigma=0.01 in approved research evaluation
+        if self.dp_enabled and self.execution_mode == ExecutionMode.RESEARCH_SIMULATION:
+            if math.isclose(self.dp_noise_multiplier, LEGACY_UNCALIBRATED_NOISE_MULTIPLIER, abs_tol=1e-5):
+                raise ValueError(
+                    f"Legacy uncalibrated sigma={LEGACY_UNCALIBRATED_NOISE_MULTIPLIER} is strictly rejected "
+                    f"for approved research evaluation. Calibrated research baseline is sigma={APPROVED_NOISE_MULTIPLIER}."
+                )
         self.clean_baseline_acc: Optional[float] = None
 
         # Track routing and dataset loading
@@ -161,11 +227,16 @@ class FederatedOrchestrator:
 
         self.input_dim = config.get("input_dim", self.X_train.shape[1])
 
-        # Trust engine thresholds
+        # Trust engine thresholds & calibration (WP3)
         trust_cfg = config.get("trust_config", {})
-        self.norm_threshold_factor = trust_cfg.get("norm_threshold_factor", 2.5)
-        self.cosine_threshold      = trust_cfg.get("cosine_threshold", 0.15)
-        self.loss_increase_threshold = trust_cfg.get("loss_increase_threshold", 1.5)
+        self.norm_threshold_factor = trust_cfg.get("norm_threshold_factor", config.get("norm_threshold_factor", 2.5))
+        self.cosine_threshold      = trust_cfg.get("cosine_threshold", config.get("cosine_threshold", 0.15))
+        self.loss_increase_threshold = trust_cfg.get("loss_increase_threshold", config.get("loss_increase_threshold", 1.5))
+        self.trust_calibration_mode = config.get("trust_calibration_mode", trust_cfg.get("calibration_mode", "uncalibrated"))
+        self.norm_margin_factor = float(trust_cfg.get("norm_margin_factor", config.get("norm_margin_factor", 1.25)))
+        self.norm_min_factor = float(trust_cfg.get("norm_min_factor", config.get("norm_min_factor", 0.75)))
+        self.calibrated_cosine_threshold = float(trust_cfg.get("calibrated_cosine_threshold", config.get("calibrated_cosine_threshold", 0.10)))
+        self.calibrated_loss_factor = float(trust_cfg.get("calibrated_loss_factor", config.get("calibrated_loss_factor", 5.0)))
 
         # Internal components (initialized in setup())
         self.clients:     List[FederatedClient]    = []
@@ -369,6 +440,24 @@ class FederatedOrchestrator:
                         "flip_ratio": float(self.label_flip_ratio)
                     })
 
+            client_dp_mech = None
+            if self.dp_enabled:
+                if self.execution_mode in (ExecutionMode.RESEARCH_SIMULATION, ExecutionMode.DEPLOYMENT):
+                    client_dp_mech = ClientLevelDPMechanism(
+                        clip_norm=self.dp_clip_norm,
+                        noise_multiplier=self.dp_noise_multiplier,
+                        execution_mode=self.execution_mode,
+                        privacy_randomness_mode=PrivacyRandomnessMode.OS_CSPRNG
+                    )
+                elif self.execution_mode == ExecutionMode.TEST:
+                    client_dp_mech = ClientLevelDPMechanism(
+                        clip_norm=self.dp_clip_norm,
+                        noise_multiplier=self.dp_noise_multiplier,
+                        seed=self.seed + cid,
+                        execution_mode=ExecutionMode.TEST,
+                        privacy_randomness_mode=PrivacyRandomnessMode.DETERMINISTIC_TEST
+                    )
+
             client = FederatedClient(
                 client_id=cid,
                 client_name=f"Network-Node-{cid}",
@@ -377,7 +466,8 @@ class FederatedOrchestrator:
                 input_dim=self.input_dim,
                 num_classes=self.num_classes,
                 device=self.device,
-                seed=self.seed + cid
+                seed=self.seed + cid,
+                dp_mechanism=client_dp_mech
             )
             self.clients.append(client)
 
@@ -429,7 +519,15 @@ class FederatedOrchestrator:
             enable_norm_check=self.enable_norm_check,
             enable_cosine_check=self.enable_cosine_check,
             enable_loss_check=self.enable_loss_check,
-            device=self.device
+            device=self.device,
+            calibration_mode=self.trust_calibration_mode,
+            dp_enabled=self.dp_enabled,
+            dp_clip_norm=self.dp_clip_norm,
+            dp_noise_multiplier=self.dp_noise_multiplier,
+            norm_margin_factor=self.norm_margin_factor,
+            norm_min_factor=self.norm_min_factor,
+            calibrated_cosine_threshold=self.calibrated_cosine_threshold,
+            calibrated_loss_factor=self.calibrated_loss_factor
         )
 
         self.reputation_mgr = ReputationManager(
@@ -439,16 +537,24 @@ class FederatedOrchestrator:
         self.blockchain = Blockchain(committee_size=3)
 
         if self.dp_enabled:
-            self.dp_engine = LocalDifferentialPrivacy(
-                clip_norm=self.dp_clip_norm,
-                noise_multiplier=self.dp_noise_multiplier,
-                seed=self.seed
-            )
-            self.dp_mechanism = ClientLevelDPMechanism(
-                clip_norm=self.dp_clip_norm,
-                noise_multiplier=self.dp_noise_multiplier,
-                seed=self.seed
-            )
+            if self.execution_mode == ExecutionMode.DEPLOYMENT:
+                # In DEPLOYMENT mode, central orchestrator must not generate DP noise!
+                self.dp_mechanism = None
+            elif self.execution_mode == ExecutionMode.RESEARCH_SIMULATION:
+                self.dp_mechanism = ClientLevelDPMechanism(
+                    clip_norm=self.dp_clip_norm,
+                    noise_multiplier=self.dp_noise_multiplier,
+                    execution_mode=ExecutionMode.RESEARCH_SIMULATION,
+                    privacy_randomness_mode=PrivacyRandomnessMode.OS_CSPRNG
+                )
+            elif self.execution_mode == ExecutionMode.TEST:
+                self.dp_mechanism = ClientLevelDPMechanism(
+                    clip_norm=self.dp_clip_norm,
+                    noise_multiplier=self.dp_noise_multiplier,
+                    seed=self.seed,
+                    execution_mode=ExecutionMode.TEST,
+                    privacy_randomness_mode=PrivacyRandomnessMode.DETERMINISTIC_TEST
+                )
             self.rdp_accountant = RDPAccountant()
 
     # ------------------------------------------------------------------
@@ -488,15 +594,19 @@ class FederatedOrchestrator:
 
             # Apply DP noise if enabled
             if self.dp_enabled:
-                if self.dp_mechanism is not None:
+                if self.execution_mode in (ExecutionMode.DEPLOYMENT, ExecutionMode.RESEARCH_SIMULATION):
+                    # Client-local privacy perturbation: raw update NEVER crosses client boundary
+                    weights, dp_meta = client.privatize_local_weights(current_global_weights)
+                elif self.execution_mode == ExecutionMode.TEST:
+                    # Deterministic test mode
                     client_dp_seed = (self.seed * 10007 + r * 997 + client.client_id * 101) % (2**31 - 1)
                     weights, dp_meta = self.dp_mechanism.privatize_client_weights(
                         local_weights=weights,
                         global_weights=current_global_weights,
                         seed=client_dp_seed
                     )
-                elif self.dp_engine is not None:
-                    weights, dp_meta = self.dp_engine.privatize(weights)
+                else:
+                    raise ValueError(f"Unknown execution mode: {self.execution_mode}")
                 dp_meta_round[client.client_id] = dp_meta
 
             # Apply model poisoning (non-label-flip attacks)
@@ -687,7 +797,7 @@ class FederatedOrchestrator:
             self.server.set_global_weights(new_weights)
 
         # ---- Step D: Global Evaluation & Stage 2D Metrics ----
-        eval_bs = min(self.batch_size, len(self.X_test)) if len(self.X_test) > 0 else 32
+        eval_bs = min(512, len(self.X_test)) if len(self.X_test) > 0 else 32
         eval_metrics = self.server.evaluate(self.X_test, self.y_test, batch_size=eval_bs)
         round_duration = time.time() - round_t0
 
@@ -841,7 +951,7 @@ class FederatedOrchestrator:
         val_data = self.val_data
 
         # Round 0 — initial evaluation (untrained global model)
-        eval_bs = min(self.batch_size, len(self.X_test)) if len(self.X_test) > 0 else 32
+        eval_bs = min(512, len(self.X_test)) if len(self.X_test) > 0 else 32
         init_eval = self.server.evaluate(self.X_test, self.y_test, batch_size=eval_bs)
         self.clean_baseline_acc = float(init_eval["accuracy"])
         self.round_logs = [{
@@ -983,6 +1093,8 @@ class FederatedOrchestrator:
             "attack_log":            self.attack_log,
             "dp_accounting":         self.dp_accounting,
             "dp_summary":            self.rdp_accountant.summary(delta=self.dp_target_delta) if (self.dp_enabled and self.rdp_accountant is not None) else None,
+            "execution_mode":        self.execution_mode.value,
+            "privacy_randomness_mode": self.privacy_randomness_mode.value,
             "blockchain_summary":    self.blockchain.get_audit_summary(),
             "reputation_summary":    self.reputation_mgr.get_status_summary(),
             "chain_valid":           self.blockchain.is_chain_valid(),

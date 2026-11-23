@@ -1,0 +1,153 @@
+{
+  "metadata": {
+    "seed": 42,
+    "attack_type": "gaussian_noise",
+    "sigma": 1.0
+  },
+  "runs": [
+    {
+      "scenario_name": "wp3_ablation_uncalibrated_baseline",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "uncalibrated",
+      "sigma": 1.0,
+      "elapsed_seconds": 49.56,
+      "final_accuracy": 0.569242,
+      "final_f1": 0.412985,
+      "final_loss": 0.6852,
+      "honest_submitted": 8,
+      "honest_rejected": 8,
+      "honest_fpr": 1.0,
+      "honest_quarantined_count": 4,
+      "malicious_submitted": 2,
+      "malicious_rejected": 2,
+      "malicious_detection_rate": 1.0,
+      "malicious_flagged_rate": 1.0,
+      "malicious_quarantined_count": 1,
+      "chain_height": 3,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 0.3,
+        "1": 0.3,
+        "2": 0.3,
+        "3": 0.3,
+        "4": 0.3
+      },
+      "ablation_name": "uncalibrated_baseline",
+      "tiers_active": {
+        "norm": true,
+        "cosine": true,
+        "loss": true
+      }
+    },
+    {
+      "scenario_name": "wp3_ablation_norm_only",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "privacy_aware",
+      "sigma": 1.0,
+      "elapsed_seconds": 107.15,
+      "final_accuracy": 0.497605,
+      "final_f1": 0.392099,
+      "final_loss": 331885.3321,
+      "honest_submitted": 20,
+      "honest_rejected": 0,
+      "honest_fpr": 0.0,
+      "honest_quarantined_count": 0,
+      "malicious_submitted": 2,
+      "malicious_rejected": 2,
+      "malicious_detection_rate": 1.0,
+      "malicious_flagged_rate": 1.0,
+      "malicious_quarantined_count": 1,
+      "chain_height": 6,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.3,
+        "4": 1.0
+      },
+      "ablation_name": "norm_only",
+      "tiers_active": {
+        "norm": true,
+        "cosine": false,
+        "loss": false
+      }
+    },
+    {
+      "scenario_name": "wp3_ablation_cosine_only",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "privacy_aware",
+      "sigma": 1.0,
+      "elapsed_seconds": 97.9,
+      "final_accuracy": 0.547019,
+      "final_f1": 0.432669,
+      "final_loss": 89731.7297,
+      "honest_submitted": 20,
+      "honest_rejected": 0,
+      "honest_fpr": 0.0,
+      "honest_quarantined_count": 0,
+      "malicious_submitted": 5,
+      "malicious_rejected": 0,
+      "malicious_detection_rate": 0.0,
+      "malicious_flagged_rate": 0.0,
+      "malicious_quarantined_count": 0,
+      "chain_height": 6,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0
+      },
+      "ablation_name": "cosine_only",
+      "tiers_active": {
+        "norm": false,
+        "cosine": true,
+        "loss": false
+      }
+    },
+    {
+      "scenario_name": "wp3_ablation_loss_only",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "privacy_aware",
+      "sigma": 1.0,
+      "elapsed_seconds": 82.98,
+      "final_accuracy": 0.569242,
+      "final_f1": 0.412985,
+      "final_loss": 505250.9308,
+      "honest_submitted": 20,
+      "honest_rejected": 0,
+      "honest_fpr": 0.0,
+      "honest_quarantined_count": 0,
+      "malicious_submitted": 2,
+      "malicious_rejected": 2,
+      "malicious_detection_rate": 1.0,
+      "malicious_flagged_rate": 1.0,
+      "malicious_quarantined_count": 1,
+      "chain_height": 6,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.3,
+        "4": 1.0
+      },
+      "ablation_name": "loss_only",
+      "tiers_active": {
+        "norm": false,
+        "cosine": false,
+        "loss": true
+      }
+    }
+  ]
+}

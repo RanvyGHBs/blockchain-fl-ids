@@ -21,12 +21,14 @@ class FederatedClient:
     """
 
     def __init__(self, client_id: int, client_name: str, X_local: np.ndarray, y_local: np.ndarray,
-                 input_dim: int = 122, num_classes: int = 2, device: str = "cpu", seed: int = 42):
+                 input_dim: int = 122, num_classes: int = 2, device: str = "cpu", seed: int = 42,
+                 dp_mechanism: Optional[Any] = None):
         self.client_id = client_id
         self.client_name = client_name
         self.device = device
         self.seed = seed
         self.num_classes = num_classes
+        self.dp_mechanism = dp_mechanism
 
         # Local dataset
         self.num_samples = len(y_local)
@@ -43,6 +45,21 @@ class FederatedClient:
         self.reputation = 1.0
         self.is_quarantined = False
         self.is_malicious = False
+
+    def set_dp_mechanism(self, dp_mechanism: Any):
+        """Configures a client-local differential privacy mechanism."""
+        self.dp_mechanism = dp_mechanism
+
+    def privatize_local_weights(self, global_weights: np.ndarray) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """
+        Locally privatizes the client update Delta w = w_local - w_global using client-local
+        differential privacy. In DEPLOYMENT mode, privacy noise is generated locally on the client
+        via OS-CSPRNG without orchestrator seed injection.
+        """
+        if self.dp_mechanism is None:
+            raise RuntimeError(f"Client {self.client_id} has no configured local DP mechanism.")
+        local_w = self.get_local_weights()
+        return self.dp_mechanism.privatize_client_weights(local_weights=local_w, global_weights=global_weights)
 
     def set_global_weights(self, global_weights: np.ndarray):
         """Synchronizes local model parameters with the latest global model."""

@@ -1,6 +1,8 @@
 # System & Environment Configuration
 seed: 42
 device: "auto"  # "cuda", "cpu", or "auto"
+execution_mode: "RESEARCH_SIMULATION"  # "TEST", "RESEARCH_SIMULATION", "DEPLOYMENT"
+privacy_randomness_mode: "OS_CSPRNG"   # "DETERMINISTIC_TEST", "OS_CSPRNG"
 
 # Dataset Configuration
 data:
@@ -53,8 +55,10 @@ blockchain:
   model_storage_dir: "data/models_offchain"
   block_explorer_page_size: 10
 
-# Differential Privacy Configuration
+# Differential Privacy Configuration (Calibrated Research Baseline WP2.2 / WP2.4)
 privacy:
   dp_enabled: false
   clip_norm: 1.0
-  noise_multiplier: 0.01  # Gaussian noise sigma
+  noise_multiplier: 1.0  # Calibrated Gaussian noise sigma (replaces legacy 0.01)
+  target_delta: 0.00001
+  communication_rounds: 5

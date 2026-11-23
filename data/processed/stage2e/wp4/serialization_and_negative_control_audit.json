@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "stage": "2E.3.2",
+    "timestamp": "2026-11-23T07:27:00Z",
+    "description": "Serialization Size Reconciliation and Negative Control Diversity Audit",
+    "workspace": "C:\\Users\\is043\\.gemini\\antigravity\\scratch\\blockchain-fl-ids"
+  },
+  "task_a_serialization_byte_accounting": {
+    "model_architecture": "IDSNet",
+    "architecture_parameters": {
+      "input_dim": 122,
+      "num_classes": 2,
+      "hidden_dims": [128, 64, 32],
+      "dropout_rate": 0.2
+    },
+    "trainable_parameters": {
+      "tensor_count": 14,
+      "total_elements": 26594,
+      "dtype": "float32",
+      "bytes_per_element": 4,
+      "raw_parameter_bytes": 106376,
+      "tensors": [
+        {"name": "feature_extractor.0.weight", "shape": [128, 122], "elements": 15616, "bytes": 62464},
+        {"name": "feature_extractor.0.bias", "shape": [128], "elements": 128, "bytes": 512},
+        {"name": "feature_extractor.1.weight", "shape": [128], "elements": 128, "bytes": 512},
+        {"name": "feature_extractor.1.bias", "shape": [128], "elements": 128, "bytes": 512},
+        {"name": "feature_extractor.4.weight", "shape": [64, 128], "elements": 8192, "bytes": 32768},
+        {"name": "feature_extractor.4.bias", "shape": [64], "elements": 64, "bytes": 256},
+        {"name": "feature_extractor.5.weight", "shape": [64], "elements": 64, "bytes": 256},
+        {"name": "feature_extractor.5.bias", "shape": [64], "elements": 64, "bytes": 256},
+        {"name": "feature_extractor.8.weight", "shape": [32, 64], "elements": 2048, "bytes": 8192},
+        {"name": "feature_extractor.8.bias", "shape": [32], "elements": 32, "bytes": 128},
+        {"name": "feature_extractor.9.weight", "shape": [32], "elements": 32, "bytes": 128},
+        {"name": "feature_extractor.9.bias", "shape": [32], "elements": 32, "bytes": 128},
+        {"name": "classifier.weight", "shape": [2, 32], "elements": 64, "bytes": 256},
+        {"name": "classifier.bias", "shape": [2], "elements": 2, "bytes": 8}
+      ]
+    },
+    "non_trainable_buffers": {
+      "buffer_count": 9,
+      "total_elements": 451,
+      "total_bytes": 1816,
+      "included_in_weights_vector": false,
+      "extraction_method": "IDSNet.get_weights_vector() iterates over self.parameters() only, excluding self.named_buffers()",
+      "buffers": [
+        {"name": "feature_extractor.1.running_mean", "shape": [128], "dtype": "float32", "elements": 128, "bytes": 512},
+        {"name": "feature_extractor.1.running_var", "shape": [128], "dtype": "float32", "elements": 128, "bytes": 512},
+        {"name": "feature_extractor.1.num_batches_tracked", "shape": [], "dtype": "int64", "elements": 1, "bytes": 8},
+        {"name": "feature_extractor.5.running_mean", "shape": [64], "dtype": "float32", "elements": 64, "bytes": 256},
+        {"name": "feature_extractor.5.running_var", "shape": [64], "dtype": "float32", "elements": 64, "bytes": 256},
+        {"name": "feature_extractor.5.num_batches_tracked", "shape": [], "dtype": "int64", "elements": 1, "bytes": 8},
+        {"name": "feature_extractor.9.running_mean", "shape": [32], "dtype": "float32", "elements": 32, "bytes": 128},
+        {"name": "feature_extractor.9.running_var", "shape": [32], "dtype": "float32", "elements": 32, "bytes": 128},
+        {"name": "feature_extractor.9.num_batches_tracked", "shape": [], "dtype": "int64", "elements": 1, "bytes": 8}
+      ]
+    },
+    "serialization_reconciliation": {
+      "serialization_method": "pickle.dumps(weights_vector, protocol=4)",
+      "target_object": "numpy.ndarray (1D float32, length 26594)",
+      "raw_data_buffer_bytes": 106376,
+      "total_serialized_payload_bytes": 106537,
+      "container_overhead_bytes": 161,
+      "opcode_breakdown": [
+        {
+          "component": "Pickle Protocol Framing Header",
+          "bytes": 9,
+          "opcodes": ["PROTO 4", "FRAME 131"],
+          "description": "Protocol version specification and initial frame size indicator"
+        },
+        {
+          "component": "NumPy Reconstructor Reference",
+          "bytes": 74,
+          "opcodes": ["SHORT_BINUNICODE 'numpy._core.multiarray'", "SHORT_BINUNICODE '_reconstruct'", "STACK_GLOBAL", "SHORT_BINUNICODE 'numpy'", "SHORT_BINUNICODE 'ndarray'", "STACK_GLOBAL"],
+          "description": "Module path and class constructor symbols for array reconstruction"
+        },
+        {
+          "component": "Array Dimensions and Shape",
+          "bytes": 9,
+          "opcodes": ["BININT1 0", "TUPLE1", "BININT2 26594", "TUPLE1"],
+          "description": "Shape tuple framing specifying 1D length of 26,594 elements"
+        },
+        {
+          "component": "Dtype Descriptor",
+          "bytes": 48,
+          "opcodes": ["SHORT_BINUNICODE 'dtype'", "STACK_GLOBAL", "SHORT_BINUNICODE 'f4'", "BUILD"],
+          "description": "NumPy float32 ('f4') dtype descriptor object and endianness metadata"
+        },
+        {
+          "component": "Buffer Wrapper & Execution Terminator",
+          "bytes": 21,
+          "opcodes": ["BINBYTES header (length 106376)", "BUILD", "STOP"],
+          "description": "Raw byte string framing wrapper, ndarray state application, and pickle termination"
+        }
+      ],
+      "overhead_sum_verification": "9 + 74 + 9 + 48 + 21 = 161 bytes exactly"
+    },
+    "payload_symmetry": {
+      "upstream_client_update_bytes": 106537,
+      "upstream_client_update_kib": 104.0400390625,
+      "downstream_server_broadcast_bytes": 106537,
+      "downstream_server_broadcast_kib": 104.0400390625,
+      "symmetry_ratio": 1.0,
+      "protocol_overhead_note": "HTTP/RPC framing and cryptographic signatures add an additional 122 bytes per upstream message (total 106,659 bytes / 104.16 KiB) and 45 bytes per downstream message (total 106,582 bytes / 104.08 KiB) as profiled in Stage 2E.3.1"
+    }
+  },
+  "task_b_negative_control_diversity_audit": {
+    "evaluation_module": "src/blockchain/audit_verifier.py::SyntheticTamperSuite",
+    "trial_parameters": {
+      "total_trials_configured": 100,
+      "total_trials_executed": 100,
+      "observed_false_alarms": 0,
+      "observed_false_positive_rate": 0.0
+    },
+    "structural_diversity_analysis": {
+      "ledger_source": "run_stage2e_wp4.py::build_sample_pristine_chain(num_rounds=3, num_clients=5)",
+      "generation_mechanism": "Single pristine ledger instantiated once, then cloned 100 times via copy.deepcopy() in run_finite_tamper_benchmark",
+      "unique_ledger_instances": 1,
+      "unique_block_heights": [4],
+      "blocks_per_ledger": 4,
+      "block_sequence": ["Genesis (Block 0)", "Round 1 (Block 1)", "Round 2 (Block 2)", "Round 3 (Block 3)"],
+      "transactions_per_round_block": 5,
+      "total_transactions_per_ledger": 15,
+      "unique_merkle_roots": 3,
+      "unique_ledger_hashes": 1,
+      "diversity_classification": "Zero structural diversity (repeated-measurement stability test of a single pristine baseline)"
+    },
+    "scientific_interpretation": {
+      "what_it_proves": "The audit verifier is strictly deterministic and does not suffer from random false positives, state mutation side-effects, or transient verification errors when evaluating a valid 4-block, 15-transaction pristine ledger across 100 successive executions.",
+      "what_it_does_not_prove": "It does NOT prove general zero false-positive rates across diverse, complex, or unconstrained legitimate production ledgers (e.g. variable block heights, variable participant sets, skipped consensus rounds, network latency reorganizations, or concurrent transaction batches).",
+      "reporting_qualification": "Must be reported as: '0/100 false alarms (0.00% observed FPR) on repeated verification trials of the tested 4-block pristine ledger template. Generalization to structurally diverse legitimate ledgers requires future evaluation on expanded multi-topology control suites.'"
+    },
+    "future_expanded_suite_specification": {
+      "objective": "Evaluate false positive resistance against structurally diverse legitimate ledgers",
+      "planned_diversity_dimensions": [
+        {"dimension": "Variable Block Height", "range": "1 to 20 blocks", "target_trials": 20},
+        {"dimension": "Dynamic Client Participation", "range": "3 to 25 clients per round", "target_trials": 20},
+        {"dimension": "Intermittent Dropouts / Sparse Rounds", "range": "1 to 5 rounds with missing clients", "target_trials": 20},
+        {"dimension": "Multi-Topology Clustering", "range": "Heterogeneous client clustering across organizations", "target_trials": 20},
+        {"dimension": "Stochastic Transaction Ordering", "range": "Valid non-sequential client arrival sequences", "target_trials": 20}
+      ],
+      "total_proposed_trials": 100,
+      "execution_prerequisite": "Requires explicit user authorization before launching new benchmark runs"
+    }
+  }
+}

@@ -46,6 +46,29 @@ from src.privacy.differential import LocalDifferentialPrivacy
 from src.xai.explainer import FastFeatureExplainer
 from src.education.content import EDUCATIONAL_MODULES
 from src.federated.analytics import compute_research_headline_metrics
+from src.visualization.educational_widgets import (
+    render_fl_lifecycle_widget,
+    render_dirichlet_widget,
+    render_clipping_widget,
+    render_aggregator_widget,
+    render_attack_vectors_widget,
+    render_trust_radar_widget,
+    render_merkle_builder_widget,
+    render_ids_classifier_widget,
+    render_vector_geometry_widget,
+)
+from src.visualization.research_visualizers import (
+    render_fl_architecture_visualizer,
+    render_non_iid_distribution_visualizer,
+    render_aggregation_comparison_visualizer,
+    render_attack_defense_visualizer,
+    render_trust_reputation_visualizer,
+    render_blockchain_audit_visualizer,
+)
+from src.visualization.results_visualizers import (
+    render_wp1_benchmark_dashboard,
+    render_wp4_overhead_dashboard,
+)
 
 
 # -----------------------------------------------------------------------------
@@ -400,6 +423,14 @@ if section == "🌐 1. System Overview":
 
         fig_dist.update_layout(barmode="stack", title=f"Class Distribution per Simulated Node ({active_data['name']})", template="plotly_dark", height=320)
         st.plotly_chart(fig_dist, use_container_width=True)
+
+    # Advanced Research Visualizers: FL Architecture & Non-IID Skew
+    st.markdown("---")
+    with st.expander("🔄 Advanced Research Visualizer: Collaborative FL Architecture & Lifecycle", expanded=False):
+        render_fl_architecture_visualizer(num_clients=num_clients)
+
+    with st.expander("📊 Advanced Research Visualizer: Non-IID Dirichlet Heterogeneity Analysis", expanded=False):
+        render_non_iid_distribution_visualizer(X_train, y_train, num_classes=num_classes, class_names=class_names)
 
 
 # ==============================================================================
@@ -764,6 +795,14 @@ elif section == "⚙️ 2. FL & Defense Studio":
         else:
             st.write("No simulation history recorded in this session yet.")
 
+    # Advanced Research Visualizers: Aggregators & Multi-Attack Matrix
+    st.markdown("---")
+    with st.expander("⚖️ Advanced Research Visualizer: Aggregation Algorithm Comparison", expanded=False):
+        render_aggregation_comparison_visualizer()
+
+    with st.expander("🛡️ Advanced Research Visualizer: Multi-Attack Defense Matrix", expanded=False):
+        render_attack_defense_visualizer()
+
 
 # ==============================================================================
 # SECTION 3: TRUST & GOVERNANCE
@@ -831,6 +870,10 @@ elif section == "🛡️ 3. Trust & Governance":
         2. **Cosine Consensus to Peer Median:** $\cos(\theta) = \frac{w_k \cdot w_{\text{med}}}{\|w_k\|_2 \|w_{\text{med}}\|_2} \ge \tau_{\cos}$ (catches sign-flipping).
         3. **Validation Loss Delta:** $\Delta L = L_{\text{cand}} - L_{\text{baseline}} \le \tau_{\text{loss}}$ (protects benign Non-IID specialization).
         """)
+
+    # Advanced Research Visualizer: Multi-Criteria Filter & Reputation Transitions
+    st.markdown("---")
+    render_trust_reputation_visualizer()
 
 
 # ==============================================================================
@@ -911,6 +954,10 @@ elif section == "⛓️ 4. Blockchain Audit":
     # Level 2 Technical Deep-Dive Accordion
     with st.expander("🔬 Level 2 Technical Inspection: Raw SHA-256 Block Header & Merkle Derivation"):
         st.json(target_block.to_dict())
+
+    # Advanced Research Visualizer: Cryptographic Block Audit & Tamper Detection
+    st.markdown("---")
+    render_blockchain_audit_visualizer(st.session_state.blockchain)
 
 
 # ==============================================================================
@@ -1009,6 +1056,12 @@ elif section == "📊 5. Research Intelligence":
 
         fig_traj.update_layout(xaxis_title="Round", yaxis_title="Accuracy (%)", template="plotly_dark", height=380)
         st.plotly_chart(fig_traj, use_container_width=True)
+
+        # Stage 2E Empirical Research Dashboards (WP1 & WP4)
+        st.markdown("---")
+        render_wp1_benchmark_dashboard()
+        st.markdown("---")
+        render_wp4_overhead_dashboard()
     else:
         st.warning("Benchmark results file (stage2_results.json) not found. Run `python run_stage2.py` to generate complete data.")
 
@@ -1151,31 +1204,24 @@ elif section == "🎓 6. Learn & Explore":
         st.caption("*(Illustrative Educational Demonstration — Conceptual visual model)*")
         st.markdown(mod["level_2_visualize"]["description"])
 
-        if mod["level_2_visualize"]["demo_type"] == "fl_lifecycle":
-            for step in mod["level_2_visualize"]["steps"]:
-                st.markdown(f"""
-                <div class="story-step">
-                    <b>{step['step']}</b>: {step['desc']}
-                </div>
-                """, unsafe_allow_html=True)
-
-        elif mod["level_2_visualize"]["demo_type"] == "dirichlet_slider":
-            alpha_val = st.slider("Illustrative Dirichlet Alpha (Concentration)", min_value=0.1, max_value=5.0, value=0.5, step=0.1)
-            proportions = np.random.RandomState(42).dirichlet(np.repeat(alpha_val, 5))
-            fig_demo = px.bar(x=[f"Node-{i}" for i in range(5)], y=proportions, labels={"x": "Client", "y": "Class Proportion"}, title=f"Sample Dirichlet Class Skew (alpha = {alpha_val:.1f})", template="plotly_dark", height=280)
-            st.plotly_chart(fig_demo, use_container_width=True)
-
-        elif mod["level_2_visualize"]["demo_type"] == "vector_geometry":
-            angle = st.slider("Illustrative Vector Angle (degrees)", min_value=0, max_value=180, value=180, step=15)
-            rad = np.radians(angle)
-            cos_val = np.cos(rad)
-            st.metric("Cosine Similarity cos(theta)", f"{cos_val:.3f}", "Aligned (+1)" if cos_val > 0 else "Sign-Flipped (-1)")
-            fig_v = go.Figure()
-            fig_v.add_trace(go.Scatter(x=[0, 1], y=[0, 0], mode="lines+markers+text", name="Honest Vector w_med", text=["", "Peer Consensus"], textposition="top right"))
-            fig_v.add_trace(go.Scatter(x=[0, np.cos(rad)], y=[0, np.sin(rad)], mode="lines+markers+text", name="Candidate Update w_k", text=["", "Candidate"], textposition="top right"))
-            fig_v.update_layout(xaxis=dict(range=[-1.2, 1.2]), yaxis=dict(range=[-1.2, 1.2]), title="2D Vector Orientation", template="plotly_dark", height=320)
-            st.plotly_chart(fig_v, use_container_width=True)
-
+        if mod["id"] == "module_1":
+            render_fl_lifecycle_widget()
+        elif mod["id"] == "module_2":
+            render_dirichlet_widget()
+        elif mod["id"] == "module_3":
+            render_clipping_widget()
+        elif mod["id"] == "module_4":
+            render_aggregator_widget()
+        elif mod["id"] == "module_5":
+            render_attack_vectors_widget()
+        elif mod["id"] == "module_6":
+            render_trust_radar_widget()
+        elif mod["id"] == "module_7":
+            render_merkle_builder_widget()
+        elif mod["id"] == "module_8":
+            render_ids_classifier_widget()
+        elif mod["id"] == "module_9":
+            render_vector_geometry_widget()
         else:
             st.info(mod["level_2_visualize"].get("explanation", "Conceptual demonstration."))
 

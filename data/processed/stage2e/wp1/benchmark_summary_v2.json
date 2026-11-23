@@ -1,0 +1,487 @@
+{
+  "metadata": {
+    "version": "2.0 (Audited & Methodologically Corrected)",
+    "milestone": "Stage 2E.3.1",
+    "description": "Multi-seed statistical baseline evaluation with family-wise Holm-Bonferroni correction and qualified statistical power interpretation.",
+    "seeds": [
+      42,
+      101,
+      2024,
+      777,
+      999
+    ],
+    "num_seeds": 5,
+    "num_rounds": 3,
+    "sampling_unit": "Seed-level experimental run (n=5). Individual test set evaluations (N=22,544) serve as measurement observations, not independent replications.",
+    "methodological_corrections": [
+      "Applied Holm-Bonferroni step-down correction across the family of 7 comparisons vs FedAvg.",
+      "Replaced 'Ceiling' and 'Floor' language with 'Reference'.",
+      "Replaced 'Zero-Degradation Guarantee' with 'No Measurable Clean-Performance Degradation Observed Across Five Pilot Seeds'.",
+      "Replaced post-hoc 'Fully Powered' claims with prospective sample-size planning ranges.",
+      "Qualified Coordinate Median degradation mechanism as not yet conclusively isolated."
+    ]
+  },
+  "models": {
+    "centralized_ids": {
+      "label": "Centralized IDS Reference",
+      "per_seed_accuracy": [
+        0.8107700496806246,
+        0.7767033356990773,
+        0.7803850248403122,
+        0.7988821859474805,
+        0.7720014194464159
+      ],
+      "per_seed_f1_macro": [
+        0.8106614159502387,
+        0.7766070638771481,
+        0.7803076795882442,
+        0.7986092040478712,
+        0.7718299551797588
+      ],
+      "accuracy_stats": {
+        "mean": 0.7877484031227822,
+        "std": 0.01641750345858383,
+        "se": 0.007342130750846269,
+        "ci_95": [
+          0.7673633801378728,
+          0.8081334261076916
+        ],
+        "ci_95_str": "[0.7674, 0.8081]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.7876030637286521,
+        "std": 0.01639930126321429,
+        "se": 0.007333990481609064,
+        "ci_95": [
+          0.7672406417544213,
+          0.8079654857028828
+        ],
+        "ci_95_str": "[0.7672, 0.8080]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "local_silos": {
+      "label": "Local-Silo Reference",
+      "per_seed_accuracy": [
+        0.7707416607523065,
+        0.7607168204400285,
+        0.7774662881476224,
+        0.7646557842441448,
+        0.7670599716110719
+      ],
+      "per_seed_f1_macro": [
+        0.7704954210403894,
+        0.7595387581518981,
+        0.7770972962546915,
+        0.7640460570378981,
+        0.7664948343954963
+      ],
+      "accuracy_stats": {
+        "mean": 0.7681281050390347,
+        "std": 0.006367051856352186,
+        "se": 0.0028474321534139426,
+        "ci_95": [
+          0.7602223659743057,
+          0.7760338441037637
+        ],
+        "ci_95_str": "[0.7602, 0.7760]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.7675344733760745,
+        "std": 0.006659507342572958,
+        "se": 0.0029782222229304224,
+        "ci_95": [
+          0.759265602863028,
+          0.775803343889121
+        ],
+        "ci_95_str": "[0.7593, 0.7758]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "fedavg": {
+      "label": "Standard FedAvg Baseline",
+      "per_seed_accuracy": [
+        0.7825141944641589,
+        0.6843062455642299,
+        0.7122072391767211,
+        0.6886533002129169,
+        0.7572303051809794
+      ],
+      "per_seed_f1_macro": [
+        0.7818228882178971,
+        0.6782498156925048,
+        0.7096199313678853,
+        0.6802674209518211,
+        0.7555356469141226
+      ],
+      "accuracy_stats": {
+        "mean": 0.7249822569198012,
+        "std": 0.043264860244222464,
+        "se": 0.019348633708621915,
+        "ci_95": [
+          0.6712618375672328,
+          0.7787026762723697
+        ],
+        "ci_95_str": "[0.6713, 0.7787]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.7210991406288463,
+        "std": 0.04612025778043448,
+        "se": 0.020625606307373014,
+        "ci_95": [
+          0.6638332769550036,
+          0.778365004302689
+        ],
+        "ci_95_str": "[0.6638, 0.7784]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "trust_weighted": {
+      "label": "Trust-Weighted FedAvg (Stage 2D Architecture)",
+      "observation_note": "No Measurable Clean-Performance Degradation Observed Across Five Pilot Seeds",
+      "per_seed_accuracy": [
+        0.7825141944641589,
+        0.6843062455642299,
+        0.7122072391767211,
+        0.6886533002129169,
+        0.7572303051809794
+      ],
+      "per_seed_f1_macro": [
+        0.7818228882178971,
+        0.6782498156925048,
+        0.7096199313678853,
+        0.6802674209518211,
+        0.7555356469141226
+      ],
+      "accuracy_stats": {
+        "mean": 0.7249822569198012,
+        "std": 0.043264860244222464,
+        "se": 0.019348633708621915,
+        "ci_95": [
+          0.6712618375672328,
+          0.7787026762723697
+        ],
+        "ci_95_str": "[0.6713, 0.7787]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.7210991406288463,
+        "std": 0.04612025778043448,
+        "se": 0.020625606307373014,
+        "ci_95": [
+          0.6638332769550036,
+          0.778365004302689
+        ],
+        "ci_95_str": "[0.6638, 0.7784]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "foolsgold": {
+      "label": "FoolsGold (Standalone Sybil Defense)",
+      "per_seed_accuracy": [
+        0.7891678495386799,
+        0.49813697657913414,
+        0.7036462029808375,
+        0.6910929737402413,
+        0.7085255500354861
+      ],
+      "per_seed_f1_macro": [
+        0.7887173406521926,
+        0.4222163039525677,
+        0.6977336396363,
+        0.68251322605271,
+        0.7030583095299998
+      ],
+      "accuracy_stats": {
+        "mean": 0.6781139105748757,
+        "std": 0.1077843866020493,
+        "se": 0.04820264307105996,
+        "ci_95": [
+          0.5442819181626347,
+          0.8119459029871167
+        ],
+        "ci_95_str": "[0.5443, 0.8119]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.6588477639647541,
+        "std": 0.1386427897315882,
+        "se": 0.062002940486008205,
+        "ci_95": [
+          0.48670000334450614,
+          0.830995524585002
+        ],
+        "ci_95_str": "[0.4867, 0.8310]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "trimmed_mean": {
+      "label": "Trimmed Mean (beta=0.2)",
+      "per_seed_accuracy": [
+        0.771513484740951,
+        0.43128992193044713,
+        0.764194464158978,
+        0.5066092973740242,
+        0.8441713981547196
+      ],
+      "per_seed_f1_macro": [
+        0.7704183882836086,
+        0.3021812279647128,
+        0.7639536953373645,
+        0.4359126105936516,
+        0.8428631665734218
+      ],
+      "accuracy_stats": {
+        "mean": 0.6635557132718239,
+        "std": 0.18233529520983147,
+        "se": 0.08154282295733499,
+        "ci_95": [
+          0.4371565416079205,
+          0.8899548849357274
+        ],
+        "ci_95_str": "[0.4372, 0.8900]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.6230658177505519,
+        "std": 0.23867671207845056,
+        "se": 0.1067394705707121,
+        "ci_95": [
+          0.3267095371530938,
+          0.91942209834801
+        ],
+        "ci_95_str": "[0.3267, 0.9194]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "multikrum_f1": {
+      "label": "Multi-Krum (f=1, m=1)",
+      "per_seed_accuracy": [
+        0.8235894251242015,
+        0.43075762952448543,
+        0.7876153300212917,
+        0.690028388928318,
+        0.5692423704755145
+      ],
+      "per_seed_f1_macro": [
+        0.8226839486297882,
+        0.3010696016121532,
+        0.7876073714399201,
+        0.6821193139123156,
+        0.36274980919806654
+      ],
+      "accuracy_stats": {
+        "mean": 0.6602466288147623,
+        "std": 0.1618159326362949,
+        "se": 0.07236628504345642,
+        "ci_95": [
+          0.45932561092450896,
+          0.8611676467050156
+        ],
+        "ci_95_str": "[0.4593, 0.8612]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.5912460089584487,
+        "std": 0.24330645430889855,
+        "se": 0.10880995423982875,
+        "ci_95": [
+          0.2891411441124797,
+          0.8933508738044177
+        ],
+        "ci_95_str": "[0.2891, 0.8934]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    },
+    "coordinate_median": {
+      "label": "Coordinate Median",
+      "qualification_note": "Coordinate Median showed substantial clean-performance degradation under the tested NSL-KDD partitioning and configuration. The mechanism behind this degradation has not yet been conclusively isolated.",
+      "per_seed_accuracy": [
+        0.768097941802697,
+        0.43075762952448543,
+        0.6469127040454223,
+        0.43128992193044713,
+        0.5692423704755145
+      ],
+      "per_seed_f1_macro": [
+        0.7668550776224414,
+        0.3010696016121532,
+        0.5938588296189984,
+        0.30211586747951735,
+        0.36274980919806654
+      ],
+      "accuracy_stats": {
+        "mean": 0.5692601135557134,
+        "std": 0.14472829623685335,
+        "se": 0.06472446173066622,
+        "ci_95": [
+          0.38955619859704294,
+          0.7489640285143838
+        ],
+        "ci_95_str": "[0.3896, 0.7490]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      },
+      "f1_macro_stats": {
+        "mean": 0.4653298371062354,
+        "std": 0.20711111725123854,
+        "se": 0.09262290741393975,
+        "ci_95": [
+          0.20816741918761344,
+          0.7224922550248574
+        ],
+        "ci_95_str": "[0.2082, 0.7225]",
+        "t_crit": 2.7764451051977987,
+        "n": 5
+      }
+    }
+  },
+  "multiple_comparisons_family_vs_fedavg": {
+    "family_size_m": 7,
+    "family_alpha": 0.05,
+    "procedure": "Holm-Bonferroni Step-Down Procedure",
+    "comparisons": {
+      "centralized_ids": {
+        "rank": 1,
+        "mean_difference": 0.06276614620298085,
+        "std_difference": 0.04078747846596974,
+        "t_statistic": 3.4409915707991936,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": 1.5388582124621555,
+        "raw_p_value": 0.02626990215864908,
+        "holm_threshold": 0.0071428571428571435,
+        "holm_adjusted_p_value": 0.18388931511054357,
+        "statistically_significant_raw": true,
+        "statistically_significant_holm": false,
+        "interpretation": "Statistically significant under unadjusted test, but not significant after Holm-Bonferroni FWER control."
+      },
+      "coordinate_median": {
+        "rank": 2,
+        "mean_difference": -0.155722143364088,
+        "std_difference": 0.11077742071463076,
+        "t_statistic": -3.143287647588999,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": -1.4057209705688807,
+        "raw_p_value": 0.03473760577259973,
+        "holm_threshold": 0.008333333333333333,
+        "holm_adjusted_p_value": 0.20842563463559838,
+        "statistically_significant_raw": true,
+        "statistically_significant_holm": false,
+        "interpretation": "Statistically significant under unadjusted test, but not significant after Holm-Bonferroni FWER control."
+      },
+      "local_silos": {
+        "rank": 3,
+        "mean_difference": 0.04314584811923357,
+        "std_difference": 0.0412343632388003,
+        "t_statistic": 2.339724486170935,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": 1.0463565999397952,
+        "raw_p_value": 0.07940228576636385,
+        "holm_threshold": 0.01,
+        "holm_adjusted_p_value": 0.3970114288318193,
+        "statistically_significant_raw": false,
+        "statistically_significant_holm": false,
+        "interpretation": "Not statistically significant before or after Holm-Bonferroni correction."
+      },
+      "foolsgold": {
+        "rank": 4,
+        "mean_difference": -0.046868346344925496,
+        "std_difference": 0.08088797023693604,
+        "t_statistic": -1.2956291042200216,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": -0.5794229501326256,
+        "raw_p_value": 0.26481330834421307,
+        "holm_threshold": 0.0125,
+        "holm_adjusted_p_value": 1.0,
+        "statistically_significant_raw": false,
+        "statistically_significant_holm": false,
+        "interpretation": "Not statistically significant before or after Holm-Bonferroni correction."
+      },
+      "multikrum_f1": {
+        "rank": 5,
+        "mean_difference": -0.06473562810503905,
+        "std_difference": 0.14666995446179515,
+        "t_statistic": -0.986931955765479,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": -0.4413693884516853,
+        "raw_p_value": 0.3795481267879879,
+        "holm_threshold": 0.016666666666666666,
+        "holm_adjusted_p_value": 1.0,
+        "statistically_significant_raw": false,
+        "statistically_significant_holm": false,
+        "interpretation": "Not statistically significant before or after Holm-Bonferroni correction."
+      },
+      "trimmed_mean": {
+        "rank": 6,
+        "mean_difference": -0.06142654364797728,
+        "std_difference": 0.14889057936561687,
+        "t_statistic": -0.9225159026512197,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": -0.41256165373054116,
+        "raw_p_value": 0.4084677955231168,
+        "holm_threshold": 0.025,
+        "holm_adjusted_p_value": 1.0,
+        "statistically_significant_raw": false,
+        "statistically_significant_holm": false,
+        "interpretation": "Not statistically significant before or after Holm-Bonferroni correction."
+      },
+      "trust_weighted": {
+        "rank": 7,
+        "mean_difference": 0.0,
+        "std_difference": 0.0,
+        "t_statistic": 0.0,
+        "degrees_of_freedom": 4,
+        "cohens_d_z": 0.0,
+        "raw_p_value": 1.0,
+        "holm_threshold": 0.05,
+        "holm_adjusted_p_value": 1.0,
+        "statistically_significant_raw": false,
+        "statistically_significant_holm": false,
+        "interpretation": "Not statistically significant before or after Holm-Bonferroni correction."
+      }
+    }
+  },
+  "prospective_power_planning": {
+    "status": "Pilot study effect-size estimates. Confirmatory sample-size planning requires prospective effect-size assumptions.",
+    "planning_assumptions": {
+      "alpha": 0.05,
+      "target_power": 0.8,
+      "two_sided": true
+    },
+    "plausible_sample_size_scenarios": {
+      "large_effect_dz_1_0": {
+        "assumed_dz": 1.0,
+        "required_N": 8
+      },
+      "medium_large_effect_dz_0_8": {
+        "assumed_dz": 0.8,
+        "required_N": 13
+      },
+      "medium_effect_dz_0_5": {
+        "assumed_dz": 0.5,
+        "required_N": 32
+      },
+      "small_medium_effect_dz_0_4": {
+        "assumed_dz": 0.4,
+        "required_N": 50
+      }
+    }
+  }
+}

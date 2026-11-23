@@ -1,0 +1,279 @@
+{
+  "metadata": {
+    "version": "2.0 (Audited & Methodologically Corrected)",
+    "milestone": "Stage 2E.3.1",
+    "description": "Computational overhead profiling and finite cryptographic audit verification with transparent communication accounting and precise architectural terminology.",
+    "environment": {
+      "os_name": "Windows",
+      "os_release": "11",
+      "os_version": "10.0.26300",
+      "machine_arch": "AMD64",
+      "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+      "python_version": "3.13.7",
+      "torch_version": "2.15.0+cpu",
+      "torch_cuda_available": false,
+      "numpy_version": "2.3.3"
+    },
+    "architectural_terminology_mapping": {
+      "ECDSA P-256": "Signature-based authentication and update attribution",
+      "SHA-256": "Cryptographic hashing",
+      "Merkle tree": "Transaction-data integrity verification",
+      "Hash chain": "Tamper-evident block linkage",
+      "Proof-of-Trust": "Simulated validator selection",
+      "Audit verifier": "Detection of specified integrity violations",
+      "Blockchain": "Locally simulated, centrally orchestrated audit ledger"
+    },
+    "architectural_boundaries": [
+      "Framework is explicitly characterized as a tamper-evident, cryptographically verifiable local audit ledger.",
+      "No claims of peer-to-peer (P2P) decentralized consensus, Proof-of-Stake/Proof-of-Work mining, or physical immutability against root filesystem compromise.",
+      "A valid cryptographic signature establishes update authenticity and author attribution under the assumed key-management model; it does NOT establish that a client update is benign.",
+      "A valid hash chain establishes chronological block linkage; it does NOT establish model accuracy or trustworthy training behavior."
+    ]
+  },
+  "cryptographic_microbenchmarks": {
+    "ecdsa_p256_sign": {
+      "mean_ms": 0.153968,
+      "median_ms": 0.0988,
+      "std_ms": 0.11011258318648237,
+      "p50_ms": 0.0988,
+      "p95_ms": 0.29255499999999995,
+      "min_ms": 0.0424,
+      "max_ms": 0.5066,
+      "trials": 100
+    },
+    "ecdsa_p256_verify": {
+      "mean_ms": 0.19678500000000004,
+      "median_ms": 0.11115,
+      "std_ms": 0.1359101242549649,
+      "p50_ms": 0.11115,
+      "p95_ms": 0.37979,
+      "min_ms": 0.0633,
+      "max_ms": 0.5355,
+      "trials": 100
+    },
+    "sha256_hash": {
+      "mean_ms": 0.007150000000000001,
+      "median_ms": 0.0045000000000000005,
+      "std_ms": 0.006465330617996267,
+      "p50_ms": 0.0045000000000000005,
+      "p95_ms": 0.017115,
+      "min_ms": 0.0009,
+      "max_ms": 0.0319,
+      "trials": 100
+    }
+  },
+  "aggregation_microbenchmarks": {
+    "fedavg": {
+      "mean_ms": 0.12436000000000001,
+      "median_ms": 0.0701,
+      "std_ms": 0.09910823073791601,
+      "p50_ms": 0.0701,
+      "p95_ms": 0.30983999999999995,
+      "min_ms": 0.0429,
+      "max_ms": 0.4947,
+      "trials": 100
+    },
+    "median": {
+      "mean_ms": 2.8479099999999993,
+      "median_ms": 2.2663,
+      "std_ms": 1.3903596651586236,
+      "p50_ms": 2.2663,
+      "p95_ms": 5.728025000000001,
+      "min_ms": 1.4678,
+      "max_ms": 6.7847,
+      "trials": 100
+    },
+    "trimmed_mean": {
+      "mean_ms": 2.657869999999999,
+      "median_ms": 1.75815,
+      "std_ms": 1.6482129758317037,
+      "p50_ms": 1.75815,
+      "p95_ms": 5.6712799999999985,
+      "min_ms": 1.1775,
+      "max_ms": 7.5769,
+      "trials": 100
+    },
+    "trust_weighted": {
+      "mean_ms": 0.22616899999999998,
+      "median_ms": 0.14825,
+      "std_ms": 0.19801622392874782,
+      "p50_ms": 0.14825,
+      "p95_ms": 0.6054849999999999,
+      "min_ms": 0.0546,
+      "max_ms": 1.0359,
+      "trials": 100
+    },
+    "multikrum_f1": {
+      "mean_ms": 0.722896,
+      "median_ms": 0.46455,
+      "std_ms": 0.488791408255096,
+      "p50_ms": 0.46455,
+      "p95_ms": 1.62928,
+      "min_ms": 0.2468,
+      "max_ms": 1.9524,
+      "trials": 100
+    },
+    "foolsgold": {
+      "mean_ms": 1.1546489999999998,
+      "median_ms": 0.78105,
+      "std_ms": 0.787345450802251,
+      "p50_ms": 0.78105,
+      "p95_ms": 2.7190899999999996,
+      "min_ms": 0.4238,
+      "max_ms": 3.4162,
+      "trials": 100
+    }
+  },
+  "ledger_operation_microbenchmarks": {
+    "merkle_root_calc": {
+      "mean_ms": 0.007061999999999998,
+      "median_ms": 0.0047,
+      "std_ms": 0.0065511034185089774,
+      "p50_ms": 0.0047,
+      "p95_ms": 0.027614999999999997,
+      "min_ms": 0.0044,
+      "max_ms": 0.0364,
+      "trials": 100
+    },
+    "forge_block_pot": {
+      "mean_ms": 0.014581000000000002,
+      "median_ms": 0.0098,
+      "std_ms": 0.013239265047577227,
+      "p50_ms": 0.0098,
+      "p95_ms": 0.055025,
+      "min_ms": 0.009,
+      "max_ms": 0.0709,
+      "trials": 100
+    },
+    "chain_validation_pot": {
+      "mean_ms": 0.014674,
+      "median_ms": 0.0091,
+      "std_ms": 0.019811247411508442,
+      "p50_ms": 0.0091,
+      "p95_ms": 0.05173,
+      "min_ms": 0.0084,
+      "max_ms": 0.1815,
+      "trials": 100
+    }
+  },
+  "communication_payload_accounting": {
+    "unit_conventions": {
+      "binary_kib": "1 KiB = 1,024 bytes",
+      "binary_mib": "1 MiB = 1,048,576 bytes",
+      "decimal_kb": "1 KB = 1,000 bytes",
+      "decimal_mb": "1 MB = 1,000,000 bytes",
+      "note_on_v1": "Stage 2E.3 report labeled binary kibibytes (bytes/1024) as 'KB'. Both unit systems are now explicitly reported."
+    },
+    "raw_component_sizes_bytes": {
+      "raw_parameter_tensor_float32": 106376,
+      "serialized_pickle_tensor": 106537,
+      "pickle_serialization_overhead": 161,
+      "ecdsa_p256_signature_string": 96,
+      "client_upstream_metadata_json": 28,
+      "server_downstream_metadata_json": 42,
+      "transaction_record_json": 496,
+      "round_block_json_5tx": 2927
+    },
+    "transmission_streams": {
+      "client_upstream_per_client_bytes": 106661,
+      "client_upstream_per_client_kib": 104.1611328125,
+      "client_upstream_per_client_kb": 106.661,
+      "server_downstream_per_client_bytes": 106579,
+      "server_downstream_per_client_kib": 104.0810546875,
+      "server_downstream_per_client_kb": 106.579,
+      "aggregate_upstream_5_clients_bytes": 533305,
+      "aggregate_upstream_5_clients_kib": 520.8056640625,
+      "aggregate_upstream_5_clients_kb": 533.305,
+      "aggregate_downstream_unicast_5_clients_bytes": 532895,
+      "aggregate_downstream_unicast_5_clients_kib": 520.4052734375,
+      "aggregate_downstream_unicast_5_clients_kb": 532.895,
+      "aggregate_downstream_multicast_single_broadcast_bytes": 106579,
+      "aggregate_downstream_multicast_single_broadcast_kib": 104.0810546875,
+      "aggregate_downstream_multicast_single_broadcast_kb": 106.579
+    },
+    "total_round_bandwidth_models": {
+      "modeled_unicast_network": {
+        "description": "Assumes server sends 5 individual unicast transmissions of global weights to 5 clients. Matches the original Stage 2E.3 1,041.21 KiB total.",
+        "total_bytes": 1066200,
+        "total_kib": 1041.2109375,
+        "total_mib": 1.0168075561523438,
+        "total_kb": 1066.2,
+        "total_mb": 1.0662
+      },
+      "modeled_multicast_network": {
+        "description": "Assumes server sends single broadcast/multicast of global weights received by all 5 clients.",
+        "total_bytes": 639884,
+        "total_kib": 624.88671875,
+        "total_mib": 0.6102409362792969,
+        "total_kb": 639.884,
+        "total_mb": 0.639884
+      }
+    },
+    "exclusions_from_round_bandwidth": [
+      "Block distribution across an external peer-to-peer network is excluded; ledger maintenance is simulated locally on the coordinator/validator.",
+      "Raw network packet headers (TCP/IP/Ethernet framing) are excluded; measurements reflect application-layer serialized payloads."
+    ]
+  },
+  "tampering_verification_benchmark": {
+    "summary": {
+      "total_positive_tested": 500,
+      "total_positive_detected": 500,
+      "observed_detection_rate": 1.0,
+      "observed_detection_rate_pct": "100.00%",
+      "detection_statement": "500/500 synthetic tampering trials were detected on this finite test suite.",
+      "total_negative_tested": 100,
+      "total_false_alarms": 0,
+      "observed_false_alarm_rate": 0.0,
+      "observed_false_alarm_rate_pct": "0.00%",
+      "false_alarm_statement": "0/100 false alarms across the tested legitimate controls.",
+      "mean_pristine_audit_latency_ms": 0.171857
+    },
+    "per_category_breakdown": {
+      "payload_modification": {
+        "tested": 100,
+        "detected": 100,
+        "detection_rate": 1.0,
+        "mean_audit_latency_ms": 0.15169,
+        "std_audit_latency_ms": 0.07092570267540535
+      },
+      "block_deletion": {
+        "tested": 100,
+        "detected": 100,
+        "detection_rate": 1.0,
+        "mean_audit_latency_ms": 0.12648099999999998,
+        "std_audit_latency_ms": 0.062258203788737754
+      },
+      "block_reordering": {
+        "tested": 100,
+        "detected": 100,
+        "detection_rate": 1.0,
+        "mean_audit_latency_ms": 0.07269899999999999,
+        "std_audit_latency_ms": 0.06864644855343939
+      },
+      "hash_chain_modification": {
+        "tested": 100,
+        "detected": 100,
+        "detection_rate": 1.0,
+        "mean_audit_latency_ms": 0.168667,
+        "std_audit_latency_ms": 0.07608125006202253
+      },
+      "merkle_root_inconsistency": {
+        "tested": 100,
+        "detected": 100,
+        "detection_rate": 1.0,
+        "mean_audit_latency_ms": 0.190214,
+        "std_audit_latency_ms": 0.0727536006256735
+      }
+    },
+    "experimental_diversity_and_limitations": {
+      "pristine_ledger_dimensions": "4 blocks (Genesis + 3 rounds), 15 total client transactions.",
+      "diversity_mechanisms": "Target block indices, transaction targets, and pseudo-random seed offsets varied deterministically across trials.",
+      "limitations": [
+        "Evaluates in-memory synthetic mutations on Python ledger objects, not raw serialized disk byte corruptions.",
+        "Does not evaluate network packet drops, bit-level TCP transmission corruptions, or coordinator fork/equivocation attacks.",
+        "Legitimate negative controls evaluated deep copies of the 4-block ledger instance rather than variable-length or high-volume ledgers.",
+        "Results constitute empirical observations on a finite test suite and must not be interpreted as universal mathematical guarantees."
+      ]
+    }
+  }
+}

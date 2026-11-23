@@ -184,6 +184,114 @@
         "cosine": true,
         "loss": false
       }
+    },
+    {
+      "scenario_name": "wp3_ablation_norm_loss",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "privacy_aware",
+      "sigma": 1.0,
+      "elapsed_seconds": 79.19,
+      "final_accuracy": 0.538458,
+      "final_f1": 0.398614,
+      "final_loss": 739791.7528,
+      "honest_submitted": 20,
+      "honest_rejected": 0,
+      "honest_fpr": 0.0,
+      "honest_quarantined_count": 0,
+      "malicious_submitted": 2,
+      "malicious_rejected": 2,
+      "malicious_detection_rate": 1.0,
+      "malicious_flagged_rate": 1.0,
+      "malicious_quarantined_count": 1,
+      "chain_height": 6,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.3,
+        "4": 1.0
+      },
+      "ablation_name": "norm_loss",
+      "tiers_active": {
+        "norm": true,
+        "cosine": false,
+        "loss": true
+      }
+    },
+    {
+      "scenario_name": "wp3_ablation_cosine_loss",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "privacy_aware",
+      "sigma": 1.0,
+      "elapsed_seconds": 93.13,
+      "final_accuracy": 0.541297,
+      "final_f1": 0.416566,
+      "final_loss": 60933.1941,
+      "honest_submitted": 20,
+      "honest_rejected": 0,
+      "honest_fpr": 0.0,
+      "honest_quarantined_count": 0,
+      "malicious_submitted": 3,
+      "malicious_rejected": 2,
+      "malicious_detection_rate": 0.666667,
+      "malicious_flagged_rate": 0.666667,
+      "malicious_quarantined_count": 1,
+      "chain_height": 6,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.35,
+        "4": 1.0
+      },
+      "ablation_name": "cosine_loss",
+      "tiers_active": {
+        "norm": false,
+        "cosine": true,
+        "loss": true
+      }
+    },
+    {
+      "scenario_name": "wp3_ablation_full_three_tier",
+      "seed": 42,
+      "attack_type": "gaussian_noise",
+      "attack_enabled": true,
+      "calibration_mode": "privacy_aware",
+      "sigma": 1.0,
+      "elapsed_seconds": 101.31,
+      "final_accuracy": 0.51384,
+      "final_f1": 0.432711,
+      "final_loss": 89398.4787,
+      "honest_submitted": 20,
+      "honest_rejected": 0,
+      "honest_fpr": 0.0,
+      "honest_quarantined_count": 0,
+      "malicious_submitted": 2,
+      "malicious_rejected": 2,
+      "malicious_detection_rate": 1.0,
+      "malicious_flagged_rate": 1.0,
+      "malicious_quarantined_count": 1,
+      "chain_height": 6,
+      "chain_valid": true,
+      "final_reputations": {
+        "0": 1.0,
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.3,
+        "4": 1.0
+      },
+      "ablation_name": "full_three_tier",
+      "tiers_active": {
+        "norm": true,
+        "cosine": true,
+        "loss": true
+      }
     }
   ]
 }

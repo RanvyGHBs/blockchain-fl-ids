@@ -21,7 +21,7 @@ def render_wp1_benchmark_dashboard(filepath: str = "data/processed/stage2e/wp1/b
     Displays 8 model paradigms, Holm-Bonferroni step-down corrections, and statistical power disclaimers.
     """
     st.subheader("🔬 Stage 2E.3.1 WP1: Multi-Seed Statistical Baseline Evaluation")
-    st.caption("Rigorous multi-seed evaluation across 5 pilot seeds ([42, 101, 2024, 777, 999]) with Holm-Bonferroni FWER control.")
+    st.caption("Rigorous multi-seed evaluation across 5 pilot seeds ([42, 101, 2024, 777, 999]) with Holm-Bonferroni FWER control. Statistical tests evaluate a Two-tailed paired Student's t-test (five paired seed-level observations, df = 4).")
 
     if not os.path.exists(filepath):
         st.warning(f"WP1 benchmark artifact not found at '{filepath}'. Please check disk path.")
@@ -115,6 +115,7 @@ def render_wp1_benchmark_dashboard(filepath: str = "data/processed/stage2e/wp1/b
         height=360
     )
     st.plotly_chart(fig, use_container_width=True)
+    st.caption("Error bars show 95% confidence intervals for individual model mean accuracy across five seeds; they are not confidence intervals for paired differences versus FedAvg.")
 
 
 def render_wp4_overhead_dashboard(

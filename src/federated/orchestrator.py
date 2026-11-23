@@ -45,6 +45,8 @@ from src.blockchain.crypto import CryptoManager
 from src.blockchain.block import Transaction
 from src.blockchain.chain import Blockchain
 from src.privacy.differential import LocalDifferentialPrivacy
+from src.privacy.mechanism import ClientLevelDPMechanism
+from src.privacy.rdp_accountant import RDPAccountant
 from src.xai.explainer import FastFeatureExplainer
 
 
@@ -121,8 +123,9 @@ class FederatedOrchestrator:
         self.enable_blockchain = bool(defense_matrix.get("blockchain", self.defense_enabled))
 
         self.dp_enabled = config.get("dp_enabled", False)
-        self.dp_clip_norm = config.get("dp_clip_norm", 1.0)
-        self.dp_noise_multiplier = config.get("dp_noise_multiplier", 0.01)
+        self.dp_clip_norm = float(config.get("dp_clip_norm", 1.0))
+        self.dp_noise_multiplier = float(config.get("dp_noise_multiplier", 0.01))
+        self.dp_target_delta = float(config.get("dp_target_delta", 1e-5))
         self.clean_baseline_acc: Optional[float] = None
 
         # Track routing and dataset loading
@@ -171,7 +174,9 @@ class FederatedOrchestrator:
         self.trust_engine: Optional[MultiCriteriaTrustEngine] = None
         self.reputation_mgr: Optional[ReputationManager]      = None
         self.blockchain:    Optional[Blockchain]               = None
-        self.dp_engine:     Optional[LocalDifferentialPrivacy] = None
+        self.dp_engine:      Optional[LocalDifferentialPrivacy] = None
+        self.dp_mechanism:   Optional[ClientLevelDPMechanism]  = None
+        self.rdp_accountant: Optional[RDPAccountant]           = None
 
         # Per-round telemetry
         self.round_logs: List[Dict[str, Any]] = []
@@ -439,6 +444,12 @@ class FederatedOrchestrator:
                 noise_multiplier=self.dp_noise_multiplier,
                 seed=self.seed
             )
+            self.dp_mechanism = ClientLevelDPMechanism(
+                clip_norm=self.dp_clip_norm,
+                noise_multiplier=self.dp_noise_multiplier,
+                seed=self.seed
+            )
+            self.rdp_accountant = RDPAccountant()
 
     # ------------------------------------------------------------------
     # Round execution
@@ -476,8 +487,16 @@ class FederatedOrchestrator:
             weights = client.get_local_weights()
 
             # Apply DP noise if enabled
-            if self.dp_enabled and self.dp_engine is not None:
-                weights, dp_meta = self.dp_engine.privatize(weights)
+            if self.dp_enabled:
+                if self.dp_mechanism is not None:
+                    client_dp_seed = (self.seed * 10007 + r * 997 + client.client_id * 101) % (2**31 - 1)
+                    weights, dp_meta = self.dp_mechanism.privatize_client_weights(
+                        local_weights=weights,
+                        global_weights=current_global_weights,
+                        seed=client_dp_seed
+                    )
+                elif self.dp_engine is not None:
+                    weights, dp_meta = self.dp_engine.privatize(weights)
                 dp_meta_round[client.client_id] = dp_meta
 
             # Apply model poisoning (non-label-flip attacks)
@@ -772,6 +791,12 @@ class FederatedOrchestrator:
 
         if dp_meta_round:
             self.dp_accounting.append({"round": r, "dp_meta": dp_meta_round})
+            if self.dp_enabled and self.rdp_accountant is not None:
+                self.rdp_accountant.step(
+                    noise_multiplier=self.dp_noise_multiplier,
+                    clip_norm=self.dp_clip_norm,
+                    rounds=1
+                )
 
         print(
             f"  Round {r:>2}/{self.num_rounds} | "
@@ -957,6 +982,7 @@ class FederatedOrchestrator:
             "round_history":         self.round_logs,
             "attack_log":            self.attack_log,
             "dp_accounting":         self.dp_accounting,
+            "dp_summary":            self.rdp_accountant.summary(delta=self.dp_target_delta) if (self.dp_enabled and self.rdp_accountant is not None) else None,
             "blockchain_summary":    self.blockchain.get_audit_summary(),
             "reputation_summary":    self.reputation_mgr.get_status_summary(),
             "chain_valid":           self.blockchain.is_chain_valid(),

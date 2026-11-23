@@ -134,6 +134,34 @@ class TestStage2FResearchVisualizers:
         assert len(bc.chain) == 2  # Genesis + Block 1
         assert bc.is_chain_valid() is True
 
+    def test_03_multikrum_neighbor_selection_slice(self):
+        """Verify Multi-Krum slice selects exactly k = n - f - 2 = 2 closest peers for n=5, f=1."""
+        n = 5
+        f = 1
+        # Multi-Krum feasibility condition: n >= 2f + 3
+        assert n >= 2 * f + 3
+        k_closest = n - f - 2
+        assert k_closest == 2
+
+        client_vals = np.array([1.0, 1.2, 0.9, -15.0, 1.1], dtype=np.float32)
+
+        # Compute Krum scores using [1:3] slice (skipping self-distance at index 0, taking k_closest=2)
+        dists = []
+        for i in range(n):
+            sorted_peer_dists = sorted(abs(client_vals[i] - client_vals))
+            # index 0 is self-distance (0.0)
+            assert sorted_peer_dists[0] == 0.0
+            selected_peers = sorted_peer_dists[1:3]
+            assert len(selected_peers) == k_closest
+            dists.append(sum(selected_peers))
+
+        krum_idx = int(np.argmin(dists))
+        # Honest client 0 (score 0.1 + 0.1 = 0.2) must win over adversary client 3 (score 15.9 + 16.0 = 31.9)
+        assert krum_idx != 3
+        assert client_vals[krum_idx] in [1.0, 1.1, 0.9, 1.2]
+        assert dists[krum_idx] < 1.0
+        assert dists[3] > 30.0
+
 
 class TestStage2FResultsDashboards:
     """Verifies the experimental results dashboards parse actual data without errors."""

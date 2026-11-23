@@ -197,9 +197,10 @@ def render_aggregation_comparison_visualizer():
     st.subheader("⚖️ Interactive Aggregation Algorithm Comparison Visualizer")
     st.caption("Observe how different aggregation strategies handle adversarial outliers in coordinate-wise updates.")
 
-    st.markdown("""
+    st.markdown(r"""
     <div style="background-color: #1e293b; border-left: 4px solid #f59e0b; padding: 10px 14px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #fde68a;">
-        ℹ️ <b>Conceptual Demonstration:</b> This interactive widget demonstrates coordinate-level aggregation mathematics on a 5-client vector coordinate. 
+        ℹ️ <b>Interactive conceptual simulation — not an empirical benchmark result.</b><br>
+        This interactive widget demonstrates coordinate-level aggregation mathematics on a 5-client vector coordinate ($n \ge 2f + 3$). 
         It illustrates how differing algorithms respond to a controllable adversarial outlier.
     </div>
     """, unsafe_allow_html=True)
@@ -229,9 +230,9 @@ def render_aggregation_comparison_visualizer():
     reputations = np.array([1.0, 1.0, 1.0, 0.1, 1.0], dtype=np.float32)
     agg_trust = float(np.sum(client_vals * reputations) / np.sum(reputations))
 
-    # 5. Multi-Krum (1D equivalent: select client minimizing distance to k-f nearest neighbors)
-    # With n=5, f=1: distances to 3 nearest peers
-    dists = [sum(sorted(abs(client_vals[i] - client_vals))[1:4]) for i in range(5)]
+    # 5. Multi-Krum (1D equivalent: select client minimizing distance to k closest neighbors)
+    # With n=5, f=1: distances to k = n - f - 2 = 2 nearest peers (indices 1 to 3 in sorted distance array)
+    dists = [sum(sorted(abs(client_vals[i] - client_vals))[1:3]) for i in range(5)]
     krum_idx = int(np.argmin(dists))
     agg_krum = float(client_vals[krum_idx])
 
@@ -250,6 +251,15 @@ def render_aggregation_comparison_visualizer():
             {"Algorithm": "FoolsGold", "Output": agg_foolsgold, "Byzantine Tolerance": "✅ High (Dampens sybil/correlated outliers)"}
         ])
         st.dataframe(comp_df, use_container_width=True)
+
+        st.caption(
+            "Multi-Krum Selection Rule (n=5, f=1): Evaluates distance to k = n - f - 2 = 2 closest peers. "
+            "Theoretical feasibility condition n ≥ 2f + 3 is exactly satisfied (5 ≥ 5)."
+        )
+        st.caption(
+            "FoolsGold is represented using illustrative pre-attenuated client weights. "
+            "This 1D single-coordinate demonstration does not calculate the trajectory-based cosine similarities used by the full FoolsGold method."
+        )
 
         # Plot output comparison
         fig_agg = go.Figure()

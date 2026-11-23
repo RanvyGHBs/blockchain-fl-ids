@@ -110,9 +110,10 @@ flowchart TD
   2. **Coordinate Median:** $\text{median}(\{x_1, \dots, x_K\})$
   3. **Trimmed Mean:** $\frac{1}{K - 2\lfloor\beta K\rfloor}\sum_{i=\lfloor\beta K\rfloor + 1}^{K - \lfloor\beta K\rfloor} x_{(i)}$ ($\beta=0.20$)
   4. **Trust-Weighted FedAvg:** $\frac{\sum_{k=1}^K R_k x_k}{\sum_{k=1}^K R_k}$ ($R_3=0.10$ slashed, honest $R_k=1.00$)
-  5. **Multi-Krum:** Candidate minimizing $\sum_{i=1}^{K-f-2} \|x_k - x_{(i)}\|^2$ ($f=1$)
-  6. **FoolsGold:** Diversity-weighted aggregation based on historical pairwise cosine similarity.
+  5. **Multi-Krum:** Candidate minimizing $\sum_{i=1}^{K-f-2} \|x_k - x_{(i)}\|^2$ ($f=1$, selecting $k=2$ closest peers; requires $n \ge 2f + 3$).
+  6. **FoolsGold:** Diversity-weighted aggregation (represented conceptually via illustrative pre-attenuated client weights).
 - **Visual Rendering:**
+  - Mandatory Disclaimer Banner: *"Interactive conceptual simulation — not an empirical benchmark result."*
   - 5-Node Input Vector Metric Cards (Honest $x_0=1.00, x_1=1.20, x_2=0.95, x_4=1.05$; Adversary $x_3$).
   - Plotly Horizontal Bar Chart: Side-by-side comparison of aggregated output coordinates with a vertical dashed reference line at ground-truth honest mean ($\bar{x}_{\text{honest}} \approx 1.05$).
   - Summary Table: Quantifies absolute deviation from honest ground truth: $|\hat{x} - \bar{x}_{\text{honest}}|$.
@@ -337,7 +338,7 @@ flowchart TD
 - **Visual & Tabular Presentation:**
   - Summary Metrics Table: Model Name, Mean Accuracy, Standard Deviation, 95% Confidence Interval, Macro F1 Score, Accuracy Difference vs. FedAvg (pp).
   - Hypothesis Testing & Multiple Comparisons Table:
-    - Welch's two-tailed $t$-statistic vs. FedAvg.
+    - Two-tailed paired Student's t-test (five paired seed-level observations, df = 4).
     - Raw two-tailed $p$-value.
     - Holm-Bonferroni rank and step-down adjusted significance threshold $\alpha / (M - k + 1)$.
     - Adjusted $p$-value ($p_{\text{adj}}$).

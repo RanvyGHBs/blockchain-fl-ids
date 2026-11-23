@@ -105,7 +105,11 @@ class MultiCriteriaTrustEngine:
         # 1. Norm Threshold Formulation
         # ------------------------------------------------------------------
         if self.is_calibrated() and (self.dp_enabled or self.dp_noise_multiplier > 0):
-            # Theoretical expected norm under Gaussian perturbation n ~ N(0, (2*sigma*C)^2 * I_d)
+            # Root-Mean-Square (RMS) norm of privatized weights under Gaussian perturbation n ~ N(0, (2*sigma*C)^2 * I_d)
+            # Mathematical note: mu_norm = sqrt(E[||w||_2^2]) is the RMS norm, which by Jensen's inequality
+            # serves as an upper bound on E[||w||_2]. In d=26594 dimensions, RMS approximates E[||w||_2] to within < 0.001%.
+            # The interval [min_allowed_norm, max_allowed_norm] = [0.75 * mu, 1.25 * mu] is an engineering heuristic
+            # threshold designed to accommodate Non-IID client drift while rejecting model scaling / explosion.
             sigma_eff = self.dp_noise_multiplier
             c_eff = self.dp_clip_norm
             mu_norm = float(np.sqrt(global_norm**2 + 4.0 * d * (sigma_eff**2) * (c_eff**2)))
@@ -210,7 +214,11 @@ class MultiCriteriaTrustEngine:
 
             if self.enable_cosine_check:
                 if self.is_calibrated() and (self.dp_enabled or self.dp_noise_multiplier > 0):
-                    # Check cosine to peer median AND require non-inverted alignment with global model
+                    # Directional trust condition:
+                    # 1. cos(w_i, m) >= effective_cos_threshold (0.10): alignment with pooled peer consensus median m.
+                    # 2. cos(w_i, w_global) >= -0.01: non-inverted alignment with global model, with a -0.01 numerical
+                    #    buffer (~1.6 standard deviations of noise in d=26,594 dimensions) to prevent false rejection
+                    #    of orthogonal updates undergoing negative random fluctuations.
                     cosine_passed = (cos_sim >= effective_cos_threshold) and (cos_global >= -0.01)
                     if cosine_passed:
                         cosine_reason = (

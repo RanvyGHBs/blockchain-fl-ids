@@ -24,3 +24,6 @@ data/processed/*.npz
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Academic Submission Report (Excluded from Git)
+submission_report/

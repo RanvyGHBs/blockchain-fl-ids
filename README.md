@@ -3,9 +3,9 @@
 [![Python](https://img.shields.io/badge/Python-3.10%20--%203.13-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange.svg)](https://pytorch.org/)
 [![Differential Privacy](https://img.shields.io/badge/Differential%20Privacy-RDP%20Accountant-purple.svg)](https://arxiv.org/abs/1702.07476)
-[![Blockchain](https://img.shields.io/badge/Blockchain-Proof--of--Trust-green.svg)](#15-blockchain-audit-architecture)
+[![Blockchain](https://img.shields.io/badge/Blockchain-Proof--of--Trust-green.svg)](#14-blockchain-audit-architecture)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20Dashboard-red.svg)](https://streamlit.io/)
-[![Tests](https://img.shields.io/badge/Tests-218%20Passed-brightgreen.svg)](#24-how-to-run-tests)
+[![Tests](https://img.shields.io/badge/Tests-218%20Passed-brightgreen.svg)](#23-how-to-run-tests)
 [![License](https://img.shields.io/badge/License-MIT-gray.svg)](LICENSE)
 
 An academic-grade, research-caliber cyber-defense platform uniting **Deep Learning (Intrusion Detection)**, **Federated Learning (Distributed Collaborative Optimization)**, **Client-Level Differential Privacy (RDP Accounting & OS-CSPRNG Randomness)**, **Privacy-Aware Multi-Criteria Trust Calibration (Byzantine Fault Tolerance)**, and **Cryptographic Blockchain Auditing (ECDSA & Merkle Non-Repudiation)**.
@@ -22,24 +22,24 @@ An academic-grade, research-caliber cyber-defense platform uniting **Deep Learni
 - [7. Federated Learning Workflow](#7-federated-learning-workflow)
 - [8. Dataset Information](#8-dataset-information)
 - [9. Differential Privacy Mechanism](#9-differential-privacy-mechanism)
-- [10. Rényi Differential Privacy (RDP) Accounting](#10-renyi-differential-privacy-rdp-accounting)
-- [11. Privacy-Aware Trust Calibration & Reputation](#11-privacy-aware-trust-calibration--reputation)
+- [10. Renyi Differential Privacy (RDP) Accounting](#10-renyi-differential-privacy-rdp-accounting)
+- [11. Privacy-Aware Trust Calibration and Reputation](#11-privacy-aware-trust-calibration-and-reputation)
 - [12. Byzantine Attack Simulation](#12-byzantine-attack-simulation)
 - [13. Robust Aggregation Algorithms](#13-robust-aggregation-algorithms)
 - [14. Blockchain Audit Architecture](#14-blockchain-audit-architecture)
-- [15. Cryptographic Verification & Tamper Detection](#15-cryptographic-verification--tamper-detection)
-- [16. Dashboard & Visualization Features](#16-dashboard--visualization-features)
+- [15. Cryptographic Verification and Tamper Detection](#15-cryptographic-verification-and-tamper-detection)
+- [16. Dashboard and Visualization Features](#16-dashboard-and-visualization-features)
 - [17. Technology Stack](#17-technology-stack)
 - [18. Project Directory Structure](#18-project-directory-structure)
-- [19. Installation & Environment Setup](#19-installation--environment-setup)
+- [19. Installation and Environment Setup](#19-installation-and-environment-setup)
 - [20. Dataset Setup Instructions](#20-dataset-setup-instructions)
 - [21. Exact Dashboard Launch Command](#21-exact-dashboard-launch-command)
 - [22. How to Run Live Research Simulations](#22-how-to-run-live-research-simulations)
 - [23. How to Run Tests](#23-how-to-run-tests)
-- [24. Experimental Findings & Benchmarks](#24-experimental-findings--benchmarks)
-- [25. Known Limitations & Scientific Boundaries](#25-known-limitations--scientific-boundaries)
-- [26. Research Scope & Modeling Assumptions](#26-research-scope--modeling-assumptions)
-- [27. References & Acknowledgements](#27-references--acknowledgements)
+- [24. Experimental Findings and Benchmarks](#24-experimental-findings-and-benchmarks)
+- [25. Known Limitations and Scientific Boundaries](#25-known-limitations-and-scientific-boundaries)
+- [26. Research Scope and Modeling Assumptions](#26-research-scope-and-modeling-assumptions)
+- [27. References and Acknowledgements](#27-references-and-acknowledgements)
 
 ---
 
@@ -54,7 +54,9 @@ This project delivers an end-to-end framework enabling autonomous network enclav
 ## 2. Problem Statement
 
 Given $K$ distributed network clients with local non-IID datasets $\mathcal{D}_k = \{(x_i, y_i)\}_{i=1}^{n_k}$, train a global model $w^* \in \mathbb{R}^D$ ($D = 26,594$) minimizing population classification risk:
+
 $$\min_{w \in \mathbb{R}^D} \sum_{k=1}^K \frac{n_k}{n} \mathbb{E}_{(x, y) \sim \mathcal{D}_k} \left[ \mathcal{L}(w; x, y) \right]$$
+
 subject to three operational requirements:
 1. **Differential Privacy:** Each client release $\tilde{w}_k$ satisfies $(\epsilon, \delta)$-RDP under replace-one-client-dataset adjacency.
 2. **Byzantine Fault Tolerance:** Parameter convergence is maintained despite $|M| < K/2$ active adversaries injecting poisoned model updates.
@@ -130,10 +132,12 @@ flowchart TD
         Agg["Robust Aggregation<br/>(FedAvg / Coordinate Median)"]
     end
 
-    ClientLayer --> Clip --> Noise --> Sign
+    C0 & C1 & C2 & C3 & C4 --> Clip
+    Clip --> Noise --> Sign
     Sign --> NormCheck --> CosCheck --> LossCheck --> RepMgr
     RepMgr --> PoT --> BlockForge --> Ledger
-    RepMgr --> Agg --> ClientLayer
+    RepMgr --> Agg
+    Agg --> C0 & C1 & C2 & C3 & C4
 ```
 
 ---
@@ -165,7 +169,7 @@ sequenceDiagram
     else Flagged Byzantine Anomaly
         Trust->>Coord: REJECT Client Update
         Trust->>Coord: Slash Reputation: R_k = max(0.0, R_k - 0.35)
-        Note over Trust: If R_k < 0.40 -> QUARANTINE Client
+        Note over Trust: If R_k < 0.40: Quarantine Client
     end
     Coord->>Chain: Elect PoT Miner & Forge Block (Merkle Root + Hashes)
     Coord->>Coord: Aggregate Surviving Updates via FedAvg into w_(t+1)
@@ -193,37 +197,51 @@ The framework is evaluated on the canonical **NSL-KDD** network intrusion benchm
 
 Client updates are privatized strictly inside local client memory before transmission:
 1. **L2 Vector Clipping:**
+
    $$\bar{\Delta w}_k = \Delta w_k \cdot \min\left(1.0, \frac{C}{\|\Delta w_k\|_2}\right)$$
+
    where $C = 1.0$, bounding L2 sensitivity to $\Delta_2 = 2C = 2.0$ under replace-one-client-dataset adjacency.
 2. **Cryptographically Secure Gaussian Perturbation:**
+
    $$\tilde{w}_k = w_t + \bar{\Delta w}_k + n_k, \quad n_k \sim \mathcal{N}(0, 4\sigma^2C^2 I_d)$$
+
    where $\sigma = 1.0$, yielding $\sigma_{\text{noise}} = 2.0$ across all $d = 26,594$ parameters.
 3. **OS-CSPRNG Entropy:** Generated using the Box-Muller transform over system cryptographic entropy (`secrets.SystemRandom` / `os.urandom`).
 
 ---
 
-## 10. Rényi Differential Privacy (RDP) Accounting
+## 10. Renyi Differential Privacy (RDP) Accounting
 
 Cumulative privacy loss across $T = 5$ communication rounds is tracked via Rényi Differential Privacy:
+
 $$\epsilon_{\text{RDP}}(\alpha) = \frac{T \cdot \alpha}{2\sigma^2}$$
+
 Converting to standard $(\epsilon, \delta)$-DP:
+
 $$\epsilon(\delta) = \inf_{\alpha > 1} \left\{ \frac{T \cdot \alpha}{2\sigma^2} + \frac{\ln(1/\delta)}{\alpha - 1} \right\}$$
+
 For $T = 5, \sigma = 1.0, C = 1.0, \delta = 10^{-5}$, numerical infimum optimization yields:
+
 $$\alpha^* \in [3.0, 3.5] \implies \mathbf{\epsilon = 13.2565}$$
 
 ---
 
-## 11. Privacy-Aware Trust Calibration & Reputation
+## 11. Privacy-Aware Trust Calibration and Reputation
 
 ### Multi-Criteria Validation Engine
 1. **Calibrated RMS Norm Expectation:**
+
    $$\mu_{\text{RMS}} = \sqrt{\|w_t\|_2^2 + 4d\sigma^2C^2}$$
+
    Acceptance interval: $[0.75\mu_{\text{RMS}}, 1.25\mu_{\text{RMS}}]$ ($\pm 25\%$ engineering heuristic).
    By Jensen's inequality, $\mathbb{E}[\|\tilde{w}_k\|_2] \le \mu_{\text{RMS}}$. In $d=26,594$, relative variance is $1/(2d) = 1.88 \times 10^{-5}$, making $\mu_{\text{RMS}}$ a sharp operational bound.
 2. **Directional Peer Consensus:**
+
    $$\cos(\tilde{w}_k, \text{median}(\tilde{w})) \ge 0.10 \quad \text{and} \quad \cos(\tilde{w}_k, w_t) \ge -0.01$$
+
    The $-0.01$ global threshold provides a $1.63\sigma_{\cos}$ buffer for random high-dimensional noise orthogonality ($\sigma_{\cos} = 1/\sqrt{d} = 0.00613$).
 3. **Validation Loss Ceiling:**
+
    $$\mathcal{L}_{\text{val}}(\tilde{w}_k) \le \max\left(\mathcal{L}_{\text{val}}(w_t) + 1.5, \; 5.0 \cdot \text{median}(\mathcal{L}_{\text{val}})\right)$$
 
 ### Asymmetric Reputation Dynamics
@@ -250,6 +268,7 @@ The framework provides pluggable aggregation algorithms:
 - `Coordinate Median`: Dimension-wise statistical median (Byzantine-resistant).
 - `Trimmed Mean`: Trims the top and bottom $\beta = 0.20$ parameter extremes.
 - `Trust-Weighted FedAvg`: Parameters weighted by cumulative reputation:
+
   $$w_{t+1} = \sum_{k \in \text{Accepted}} \frac{R_k n_k}{\sum_{j} R_j n_j} \tilde{w}_k$$
 
 ---
@@ -260,11 +279,12 @@ Implements an **off-chain storage pattern** to eliminate blockchain bloat:
 - **Transactions:** Store client ID, round number, 32-byte SHA-256 weight hash, DER-encoded ECDSA signature, sample count, and validation disposition. Heavy model weights are retained in local cache.
 - **Blocks:** Contain block index, Unix timestamp, winning miner ID, transaction list, Merkle root hash, previous block SHA-256 hash, and current block hash.
 - **Proof-of-Trust (PoT) Consensus:** Mined by the highest-reputation honest committee member:
+
   $$\text{Miner} = \arg\max_{k \in \text{Committee}} \left\{ 0.5 R_k + 0.3 \text{TrustScore}_k + 0.2 (1 - \text{FPR}_k) \right\}$$
 
 ---
 
-## 15. Cryptographic Verification & Tamper Detection
+## 15. Cryptographic Verification and Tamper Detection
 
 - **Digital Signatures:** ECDSA over NIST P-256 (SECP256R1) with SHA-256 message digests.
 - **Binary Merkle Tree:** Round transaction hashes paired and hashed into a 32-byte root.
@@ -276,7 +296,7 @@ Implements an **off-chain storage pattern** to eliminate blockchain bloat:
 
 ---
 
-## 16. Dashboard & Visualization Features
+## 16. Dashboard and Visualization Features
 
 The interactive web platform (`app.py`) provides six comprehensive modules:
 1. **System Overview:** Network health monitoring, active clients, and global convergence metrics.
@@ -341,7 +361,7 @@ blockchain-fl-ids/
 
 ---
 
-## 19. Installation & Environment Setup
+## 19. Installation and Environment Setup
 
 ### Prerequisites
 - Python 3.10 to 3.13 installed.
@@ -365,7 +385,7 @@ pip install -r requirements.txt
 The canonical NSL-KDD dataset is included in `data/raw/` (`KDDTrain+.txt` and `KDDTest+.txt`).
 To verify dataset preprocessing and verify partition generation:
 ```powershell
-python -c "from src.data.nsl_kdd import NSLKDDLoader; loader = NSLKDDLoader(); X_tr, y_tr, X_te, y_te, f_names = loader.load_and_preprocess(); print(f'Train shape: {X_tr.shape}, Test shape: {X_te.shape}, Features: {len(f_names)}')"
+python -c "from src.data.nsl_kdd import NSLKDDLoader; loader = NSLKDDLoader(); X_tr, y_tr, X_te, y_te = loader.preprocess(); print(f'Train shape: {X_tr.shape}, Test shape: {X_te.shape}, Features: {X_tr.shape[1]}')"
 ```
 Expected output:
 ```text
@@ -417,7 +437,7 @@ python scratch/verify_checksums_and_tests.py
 
 ---
 
-## 24. Experimental Findings & Benchmarks
+## 24. Experimental Findings and Benchmarks
 
 ### Stage 2 Controlled Benchmark Results (NSL-KDD, $K=5, \alpha=0.5, T=5$)
 
@@ -441,7 +461,7 @@ python scratch/verify_checksums_and_tests.py
 
 ---
 
-## 25. Known Limitations & Scientific Boundaries
+## 25. Known Limitations and Scientific Boundaries
 
 To preserve strict academic integrity, several operational boundaries must be emphasized:
 1. **Label-Flipping Evasion:** Stealthy label flipping maintains unit norm ($\|\bar{\Delta w}\| \le 1.0$) and is submerged beneath high-dimensional DP noise ($\|n\|_2 \approx 326.15$, $\text{SNR} \approx -50.27\text{ dB}$). It achieves only 12.0% detection.
@@ -451,7 +471,7 @@ To preserve strict academic integrity, several operational boundaries must be em
 
 ---
 
-## 26. Research Scope & Modeling Assumptions
+## 26. Research Scope and Modeling Assumptions
 
 - **Replace-One-Client Adjacency:** Differential privacy bounds assume client-level dataset replacement without client subsampling ($q = 1.0$).
 - **Tabular Domain:** System is evaluated on tabular NIDS connection records. Domain transfer to raw streaming PCAP data remains future work.
@@ -460,7 +480,7 @@ To preserve strict academic integrity, several operational boundaries must be em
 
 ---
 
-## 27. References & Acknowledgements
+## 27. References and Acknowledgements
 
 1. **Abadi et al. (2016):** *Deep Learning with Differential Privacy.* ACM CCS.
 2. **McMahan et al. (2017):** *Communication-Efficient Learning of Deep Networks from Decentralized Data.* AISTATS.

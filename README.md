@@ -218,7 +218,7 @@ $$\epsilon_{\text{RDP}}(\alpha) = \frac{T \cdot \alpha}{2\sigma^2}$$
 
 Converting to standard $(\epsilon, \delta)$-DP:
 
-$$\epsilon(\delta) = \inf_{\alpha > 1} \left\{ \frac{T \cdot \alpha}{2\sigma^2} + \frac{\ln(1/\delta)}{\alpha - 1} \right\}$$
+$$\epsilon(\delta) = \inf_{\alpha > 1} \left[ \frac{T \cdot \alpha}{2\sigma^2} + \frac{\ln(1/\delta)}{\alpha - 1} \right]$$
 
 For $T = 5, \sigma = 1.0, C = 1.0, \delta = 10^{-5}$, numerical infimum optimization yields:
 
@@ -280,7 +280,7 @@ Implements an **off-chain storage pattern** to eliminate blockchain bloat:
 - **Blocks:** Contain block index, Unix timestamp, winning miner ID, transaction list, Merkle root hash, previous block SHA-256 hash, and current block hash.
 - **Proof-of-Trust (PoT) Consensus:** Mined by the highest-reputation honest committee member:
 
-  $$\text{Miner} = \arg\max_{k \in \text{Committee}} \left\{ 0.5 R_k + 0.3 \text{TrustScore}_k + 0.2 (1 - \text{FPR}_k) \right\}$$
+  $$\text{Miner} = \arg\max_{k \in \text{Committee}} \left[ 0.5 R_k + 0.3 \text{TrustScore}_k + 0.2 (1 - \text{FPR}_k) \right]$$
 
 ---
 

@@ -8,7 +8,6 @@ This guide covers setting up a local development environment, understanding the 
 
 ```text
 blockchain-fl-ids/
-├── .github/workflows/ci.yml              # Automated CPU CI workflow (Python 3.10–3.13)
 ├── README.md
 ├── CITATION.cff
 ├── .gitignore
@@ -78,7 +77,7 @@ pip install -r requirements-dev.txt
 
 ## 3. Dataset Setup & Integration Test Separation
 
-`data/raw/` is git-ignored. Tests that genuinely invoke `NSLKDDLoader()` against canonical NSL-KDD (`tests/test_stage1.py`, `tests/test_end_to_end_pipeline.py`, `test_wp3_calibrated_trust.py::test_08_orchestrator_integration`, and `test_education.py` tests `09–12`) are marked with `@pytest.mark.integration` so CPU CI runs completely offline without downloading the full NSL-KDD dataset.
+`data/raw/` is git-ignored. Tests that genuinely invoke `NSLKDDLoader()` against canonical NSL-KDD (`tests/test_stage1.py`, `tests/test_end_to_end_pipeline.py`, `test_wp3_calibrated_trust.py::test_08_orchestrator_integration`, and `test_education.py` tests `09–12`) are marked with `@pytest.mark.integration` so offline unit and synthetic tests can run without downloading the full NSL-KDD dataset.
 
 Verify Track A preprocessing locally when NSL-KDD is present (or allow automatic download / synthetic fallback):
 ```bash
@@ -88,7 +87,7 @@ Expected dimensions on canonical NSL-KDD: `Pool: (124973, 122)`, `Val: (1000, 12
 
 ---
 
-## 4. Running the Application, Checks & CI
+## 4. Running the Application & Local Checks
 
 ### Launch Streamlit Dashboard
 ```bash
@@ -97,7 +96,7 @@ streamlit run app.py
 
 ### Lightweight CPU Smoke Demo vs. Full NSL-KDD Demo
 ```bash
-# Fast CPU-only synthetic demo (suitable for CI and laptop verification; no dataset download):
+# Fast CPU-only synthetic demo (suitable for fast laptop verification; no dataset download):
 python scripts/run_live_demo.py --smoke
 
 # Full 2-round NSL-KDD demonstration:
@@ -106,7 +105,7 @@ python scripts/run_live_demo.py
 
 ### Run Test Suite & Configuration Validation
 ```bash
-# CI offline suite (unit, config validation, smoke demo, dashboard & frozen JSON checks; skips NSL-KDD integration)
+# Offline unit & synthetic suite (skips NSL-KDD @pytest.mark.integration tests)
 python -m pytest tests/ -m "not integration" -v
 
 # Full local suite (includes @pytest.mark.integration NSL-KDD tests)
@@ -124,16 +123,13 @@ python -m pytest tests/test_end_to_end_pipeline.py -v
 # Repo-wide correctness lint rules (configured in pyproject.toml)
 ruff check app.py src scripts tests
 
-# Stricter hygiene check on Phase 1/2 maintained entrypoints and validation tests
+# Stricter hygiene check on maintained entrypoints and validation tests
 ruff check --select E4,E7,E9,F src/config.py src/trust/reputation.py scripts/run_live_demo.py scripts/maintenance/verify_checksums_and_tests.py scripts/experiments/ tests/test_config_validation.py tests/test_smoke_demo.py tests/test_stage2d2_integrity_hardening.py tests/test_stage2e_3_2_closure.py
 
-# Checksum audit of 25 frozen artifacts (use --checksums-only in CI)
+# Checksum audit of 25 frozen artifacts (use --checksums-only to skip pytest)
 python scripts/maintenance/verify_checksums_and_tests.py
 python scripts/maintenance/verify_checksums_and_tests.py --checksums-only
 ```
-
-### GitHub Actions CI ([ci.yml](../.github/workflows/ci.yml))
-Triggered on pushes to `main`, pull requests to `main`, and `workflow_dispatch`. Runs on CPU (`ubuntu-latest`) across Python `3.10`, `3.11`, `3.12`, and `3.13`: byte-compilation & import checks, Ruff checks, 25-artifact SHA-256 verification, `pytest -m "not integration"`, and `python scripts/run_live_demo.py --smoke`.
 
 ---
 

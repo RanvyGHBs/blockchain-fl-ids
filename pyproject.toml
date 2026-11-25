@@ -2,7 +2,7 @@
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
-    "integration: marks tests requiring the local untracked NSL-KDD dataset in data/raw/ (exclude in CI with -m 'not integration')",
+    "integration: marks tests requiring the local untracked NSL-KDD dataset in data/raw/ (exclude locally when offline with -m 'not integration')",
 ]
 
 [tool.ruff]

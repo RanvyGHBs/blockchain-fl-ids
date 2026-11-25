@@ -1,6 +1,5 @@
 # Blockchain-Assisted Privacy-Preserving Federated Learning for Network Intrusion Detection
 
-[![CI](https://github.com/RanvyGHBs/blockchain-fl-ids/actions/workflows/ci.yml/badge.svg)](https://github.com/RanvyGHBs/blockchain-fl-ids/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%20--%203.13-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange.svg)](https://pytorch.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red.svg)](https://streamlit.io/)
@@ -200,7 +199,7 @@ python scripts/run_live_demo.py
 
 ## How to Run Tests & Quality Checks
 
-### Automated CI Suite (CPU, No NSL-KDD Download)
+### Offline Unit & Synthetic Test Suite (CPU, No NSL-KDD Download)
 ```bash
 python -m pytest tests/ -m "not integration" -q
 ```
@@ -236,7 +235,6 @@ python scripts/maintenance/verify_checksums_and_tests.py
 
 ```text
 blockchain-fl-ids/
-├── .github/workflows/ci.yml              # Multi-version CPU GitHub Actions CI workflow
 ├── README.md
 ├── CITATION.cff
 ├── .gitignore

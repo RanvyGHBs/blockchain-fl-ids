@@ -1,5 +1,6 @@
 # Blockchain-Assisted Privacy-Preserving Federated Learning for Network Intrusion Detection
 
+[![CI](https://github.com/RanvyGHBs/blockchain-fl-ids/actions/workflows/ci.yml/badge.svg)](https://github.com/RanvyGHBs/blockchain-fl-ids/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%20--%203.13-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange.svg)](https://pytorch.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red.svg)](https://streamlit.io/)
@@ -160,8 +161,9 @@ source .venv/bin/activate
 
 pip install --upgrade pip
 pip install -r requirements.txt
+# Development, testing, and linting tools (pytest, ruff):
+pip install -r requirements-dev.txt
 ```
-To run the automated test suite, ensure `pytest` is installed (`pip install pytest`).
 
 ### 3. Verify Dataset Setup (NSL-KDD)
 Canonical raw files (`KDDTrain+.txt`, `KDDTest+.txt`) are stored in `data/raw/`. If missing, `NSLKDDLoader` downloads them automatically on first run (or uses a synthetic fallback offline). Verify isolated preprocessing:
@@ -185,27 +187,44 @@ streamlit run app.py
 Open **`http://localhost:8501`** in your browser once Streamlit starts.
 
 ### Terminal Live Simulation Demo
-Execute a 2-round live federated simulation (NSL-KDD, OS-CSPRNG DP, `model_scaling` attack on Client 3, calibrated trust defense, and ledger forging):
+Execute a lightweight CPU-only synthetic smoke demo (no dataset download) or the full 2-round NSL-KDD live simulation (`OS-CSPRNG` DP, `model_scaling` attack on Client 3, calibrated trust defense, and ledger forging):
 ```bash
+# Lightweight CPU-only smoke demo (deterministic synthetic data, ~5s):
+python scripts/run_live_demo.py --smoke
+
+# Full NSL-KDD terminal demonstration:
 python scripts/run_live_demo.py
 ```
 
 ---
 
-## How to Run Tests
+## How to Run Tests & Quality Checks
 
-### Full Automated Test Suite (`218` Tests)
+### Automated CI Suite (CPU, No NSL-KDD Download)
+```bash
+python -m pytest tests/ -m "not integration" -q
+```
+
+### Full Automated Test Suite (Includes Local NSL-KDD Integration Tests)
 ```bash
 python -m pytest tests/ -q
 ```
 
-### End-to-End Integration Lifecycle Test Only
+### Configuration Validation, Smoke Demo & End-to-End Integration Checks
 ```bash
+# Fast validation & smoke-demo checks (CPU, synthetic data)
+python -m pytest tests/test_config_validation.py tests/test_smoke_demo.py -v
+
+# Canonical NSL-KDD end-to-end integration test (requires data/raw/ NSL-KDD)
 python -m pytest tests/test_end_to_end_pipeline.py -v
 ```
 
-### Checksum Integrity Verification (25 Frozen Artifacts) + Test Suite
+### Linting (Ruff) & Frozen Checksum Audit
 ```bash
+# Repo-wide correctness lint check
+ruff check app.py src scripts tests
+
+# Checksum audit of 25 frozen artifacts + full test suite
 python scripts/maintenance/verify_checksums_and_tests.py
 ```
 
@@ -217,11 +236,13 @@ python scripts/maintenance/verify_checksums_and_tests.py
 
 ```text
 blockchain-fl-ids/
+├── .github/workflows/ci.yml              # Multi-version CPU GitHub Actions CI workflow
 ├── README.md
 ├── CITATION.cff
 ├── .gitignore
-├── pyproject.toml                        # Pytest path configuration
-├── requirements.txt
+├── pyproject.toml                        # Pytest & Ruff configuration
+├── requirements.txt                      # Core runtime & UI dependencies
+├── requirements-dev.txt                  # Development/test dependencies (pytest, ruff)
 ├── app.py                                # 6-section Streamlit dashboard
 ├── config/default.yaml                   # Legacy Stage 2 YAML snapshot (unused at runtime; active defaults in src/config.py)
 ├── data/
@@ -245,7 +266,7 @@ blockchain-fl-ids/
 │   ├── experiments/                      # Historical stage benchmark runners
 │   └── maintenance/                      # Checksum integrity & regression verification
 ├── src/                                  # Core Python modules (data, models, privacy, trust, etc.)
-└── tests/                                # 21 automated unit and integration test files
+└── tests/                                # 23 automated unit, validation, smoke & integration test files
 ```
 
 ---

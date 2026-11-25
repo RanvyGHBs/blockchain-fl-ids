@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Python ${{ matrix.python-version }} (CPU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install runtime and development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Verify byte-compilation and core imports
+        run: |
+          python -m compileall -q app.py src scripts tests
+          python -c "import torch, numpy, pandas, scipy, sklearn, cryptography, streamlit, plotly; import src.config, src.federated.orchestrator, src.privacy.mechanism, src.trust.evaluator, src.blockchain.chain; print('Core imports verified on CPU')"
+
+      - name: Run Ruff correctness and hygiene checks
+        run: |
+          ruff check app.py src scripts tests
+          ruff check --select E4,E7,E9,F \
+            src/config.py \
+            src/trust/reputation.py \
+            scripts/run_live_demo.py \
+            scripts/maintenance/verify_checksums_and_tests.py \
+            scripts/experiments/run_benchmark.py \
+            scripts/experiments/run_stage2.py \
+            scripts/experiments/run_stage2d.py \
+            scripts/experiments/run_stage2e_wp1.py \
+            scripts/experiments/run_stage2e_wp4.py \
+            tests/test_config_validation.py \
+            tests/test_smoke_demo.py \
+            tests/test_stage2d2_integrity_hardening.py \
+            tests/test_stage2e_3_2_closure.py
+
+      - name: Verify 25 frozen research artifact SHA-256 checksums
+        run: python scripts/maintenance/verify_checksums_and_tests.py --checksums-only
+
+      - name: Run unit and synthetic integration test suite (no NSL-KDD download)
+        run: python -m pytest tests/ -m "not integration" -v -rs
+
+      - name: Run lightweight CPU-only smoke demonstration
+        run: python scripts/run_live_demo.py --smoke

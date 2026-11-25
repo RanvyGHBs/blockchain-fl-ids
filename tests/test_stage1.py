@@ -7,12 +7,14 @@ Unit tests for Stage 1 components:
 
 import unittest
 import numpy as np
+import pytest
 import torch
 from src.data.nsl_kdd import NSLKDDLoader
 from src.data.partitioner import FederatedPartitioner
 from src.models.ids_net import IDSNet
 
 
+@pytest.mark.integration
 class TestStage1(unittest.TestCase):
 
     def setUp(self):

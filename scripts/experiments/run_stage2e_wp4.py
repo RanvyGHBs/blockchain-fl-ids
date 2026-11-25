@@ -17,13 +17,12 @@ import os
 import json
 import time
 import hashlib
-from typing import Tuple, Dict, Any
-import numpy as np
+from typing import Tuple, Dict
 
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from src.blockchain.block import Block, Transaction
+from src.blockchain.block import Transaction
 from src.blockchain.chain import Blockchain
 from src.blockchain.crypto import CryptoManager
 from src.blockchain.audit_verifier import AuditVerifier, SyntheticTamperSuite

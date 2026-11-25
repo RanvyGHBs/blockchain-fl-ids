@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 import hashlib
 import subprocess
 
@@ -54,11 +55,22 @@ for rel_path, expected in EXPECTED_HASHES.items():
         print(f"MISMATCH: {rel_path} (Expected {expected}, Got {actual})")
         all_match = False
 
+parser = argparse.ArgumentParser(description="Verify frozen research artifact checksums and run pytest.")
+parser.add_argument(
+    "--checksums-only",
+    action="store_true",
+    help="Verify all 25 registered SHA-256 checksums without running the pytest suite.",
+)
+args = parser.parse_args()
+
 if all_match:
     print(f"\nALL {len(EXPECTED_HASHES)} REGISTERED RESEARCH ARTIFACTS VERIFIED IDENTICAL BIT-FOR-BIT!")
 else:
     print("\nERROR: CHECKSUM MISMATCH FOUND!")
     sys.exit(1)
+
+if args.checksums_only:
+    sys.exit(0)
 
 print("\n=== RUNNING FULL PYTEST SUITE ===")
 res = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q"], cwd=REPO_ROOT, capture_output=True, text=True)

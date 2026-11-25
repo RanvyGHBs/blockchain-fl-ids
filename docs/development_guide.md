@@ -8,11 +8,13 @@ This guide covers setting up a local development environment, understanding the 
 
 ```text
 blockchain-fl-ids/
+├── .github/workflows/ci.yml              # Automated CPU CI workflow (Python 3.10–3.13)
 ├── README.md
 ├── CITATION.cff
 ├── .gitignore
-├── pyproject.toml
-├── requirements.txt
+├── pyproject.toml                        # Pytest markers & Ruff lint configuration
+├── requirements.txt                      # Core runtime & dashboard dependencies
+├── requirements-dev.txt                  # Development & testing dependencies (pytest, ruff)
 ├── app.py                              # 6-section Streamlit web application
 ├── config/
 │   └── default.yaml                    # Default FL, DP, trust, and ledger parameters
@@ -43,7 +45,7 @@ blockchain-fl-ids/
 │   └── maintenance/
 │       └── verify_checksums_and_tests.py # SHA-256 frozen artifact verifier + pytest runner
 ├── src/                                # Core library modules
-├── tests/                              # 21 test modules (218 tests)
+├── tests/                              # 23 test modules (unit + @pytest.mark.integration NSL-KDD suite)
 └── submission_report/                  # Git-ignored academic report workspace
 ```
 
@@ -65,16 +67,20 @@ source .venv/bin/activate
 
 pip install --upgrade pip
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
-For running the test suite, ensure `pytest` is installed (`pip install pytest` if not already in your environment).
+
+- **Runtime dependencies ([requirements.txt](../requirements.txt)):** `torch`, `numpy`, `pandas`, `scipy` (`>=1.14.1` for Python 3.13 compatibility), `scikit-learn`, `cryptography`, `streamlit`, `plotly`, plus optional script plotting (`matplotlib`) and legacy unimported declarations (`pyyaml`, `tqdm`).
+- **Development dependencies ([requirements-dev.txt](../requirements-dev.txt)):** `pytest>=7.4.0` and `ruff>=0.8.0`.
+- **Packaging Note (`pip install -e .`):** Project imports use top-level `src.*` paths (`pythonpath = ["."]` in `pyproject.toml`). Shipping an editable package named `src` globally would collide with other `src` layouts, so migrating to a dedicated package namespace is deferred as a separate refactoring task to preserve frozen modules and SHA-256 test files unchanged.
 
 ---
 
-## 3. Dataset Setup (NSL-KDD)
+## 3. Dataset Setup & Integration Test Separation
 
-If `data/raw/KDDTrain+.txt` and `data/raw/KDDTest+.txt` are not already present, `NSLKDDLoader` attempts to fetch them automatically on first run (falling back to a synthetic generator only if network download fails in offline environments).
+`data/raw/` is git-ignored. Tests that genuinely invoke `NSLKDDLoader()` against canonical NSL-KDD (`tests/test_stage1.py`, `tests/test_end_to_end_pipeline.py`, `test_wp3_calibrated_trust.py::test_08_orchestrator_integration`, and `test_education.py` tests `09–12`) are marked with `@pytest.mark.integration` so CPU CI runs completely offline without downloading the full NSL-KDD dataset.
 
-Verify Track A preprocessing and 3-way isolation:
+Verify Track A preprocessing locally when NSL-KDD is present (or allow automatic download / synthetic fallback):
 ```bash
 python -c "from src.data.nsl_kdd import NSLKDDLoader; loader = NSLKDDLoader(); X_tr, y_tr, X_val, y_val, X_te, y_te = loader.preprocess_isolated(); print('Pool:', X_tr.shape, 'Val:', X_val.shape, 'Test:', X_te.shape)"
 ```
@@ -82,32 +88,52 @@ Expected dimensions on canonical NSL-KDD: `Pool: (124973, 122)`, `Val: (1000, 12
 
 ---
 
-## 4. Running the Application & Tests
+## 4. Running the Application, Checks & CI
 
 ### Launch Streamlit Dashboard
 ```bash
 streamlit run app.py
 ```
 
-### Run Live Terminal Demonstration
-Executes a 2-round `RESEARCH_SIMULATION` run under `model_scaling` attack with OS-CSPRNG DP, calibrated trust, blockchain forging, and RDP accounting:
+### Lightweight CPU Smoke Demo vs. Full NSL-KDD Demo
 ```bash
+# Fast CPU-only synthetic demo (suitable for CI and laptop verification; no dataset download):
+python scripts/run_live_demo.py --smoke
+
+# Full 2-round NSL-KDD demonstration:
 python scripts/run_live_demo.py
 ```
 
-### Run Test Suite
+### Run Test Suite & Configuration Validation
 ```bash
-# Full suite (218 tests across 21 files)
-pytest tests/ -q
+# CI offline suite (unit, config validation, smoke demo, dashboard & frozen JSON checks; skips NSL-KDD integration)
+python -m pytest tests/ -m "not integration" -v
 
-# End-to-end integration pipeline test only
-pytest tests/test_end_to_end_pipeline.py -v
+# Full local suite (includes @pytest.mark.integration NSL-KDD tests)
+python -m pytest tests/ -q
+
+# Configuration & Reputation validation tests only
+python -m pytest tests/test_config_validation.py -v
+
+# End-to-end NSL-KDD integration test only
+python -m pytest tests/test_end_to_end_pipeline.py -v
 ```
 
-### Run Frozen Checksum Integrity Audit & Tests Together
+### Lint Checks (Ruff) & Checksum Verification
 ```bash
+# Repo-wide correctness lint rules (configured in pyproject.toml)
+ruff check app.py src scripts tests
+
+# Stricter hygiene check on Phase 1/2 maintained entrypoints and validation tests
+ruff check --select E4,E7,E9,F src/config.py src/trust/reputation.py scripts/run_live_demo.py scripts/maintenance/verify_checksums_and_tests.py scripts/experiments/ tests/test_config_validation.py tests/test_smoke_demo.py tests/test_stage2d2_integrity_hardening.py tests/test_stage2e_3_2_closure.py
+
+# Checksum audit of 25 frozen artifacts (use --checksums-only in CI)
 python scripts/maintenance/verify_checksums_and_tests.py
+python scripts/maintenance/verify_checksums_and_tests.py --checksums-only
 ```
+
+### GitHub Actions CI ([ci.yml](../.github/workflows/ci.yml))
+Triggered on pushes to `main`, pull requests to `main`, and `workflow_dispatch`. Runs on CPU (`ubuntu-latest`) across Python `3.10`, `3.11`, `3.12`, and `3.13`: byte-compilation & import checks, Ruff checks, 25-artifact SHA-256 verification, `pytest -m "not integration"`, and `python scripts/run_live_demo.py --smoke`.
 
 ---
 

@@ -229,6 +229,7 @@ class TestDataIsolation:
         val_mean = float(np.mean(y_val))
         assert abs(train_mean - val_mean) < 0.05, f"Stratification deviated: train={train_mean:.3f}, val={val_mean:.3f}"
 
+    @pytest.mark.integration
     def test_09_scaler_fitted_samples_originate_exclusively_from_client_training_pool(self):
         """
         Verify that:
@@ -252,6 +253,7 @@ class TestDataIsolation:
             "Scaler must NOT include test set samples in its fitting process"
         )
 
+    @pytest.mark.integration
     def test_10_trust_engine_receives_only_dedicated_validation_benchmark(self):
         """
         Verify that:
@@ -277,6 +279,7 @@ class TestDataIsolation:
         assert val_data[1] is not y_test, "Trust engine must NEVER receive held-out test labels"
         assert not np.shares_memory(val_data[0], X_test), "val_data must not share memory with X_test"
 
+    @pytest.mark.integration
     def test_11_client_partitioning_excludes_validation_and_test_samples(self):
         """
         Verify that:
@@ -301,6 +304,7 @@ class TestDataIsolation:
             assert not np.shares_memory(Xc, X_val), f"Client {cid} partition must not share memory with validation set"
             assert not np.shares_memory(Xc, X_test), f"Client {cid} partition must not share memory with test set"
 
+    @pytest.mark.integration
     def test_12_final_test_set_independence(self):
         """
         Verify that:

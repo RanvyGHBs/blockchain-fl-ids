@@ -14,6 +14,7 @@ import sys
 import math
 import unittest
 import numpy as np
+import pytest
 import torch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -181,6 +182,7 @@ class TestWP3CalibratedTrust(unittest.TestCase):
         reports = engine_no_norm.evaluate_updates(updates, self.w_global)
         self.assertTrue(reports[1]["norm_passed"], "Norm check should be disabled.")
 
+    @pytest.mark.integration
     def test_08_orchestrator_integration(self):
         """Verify FederatedOrchestrator runs in calibrated mode with honest clients accepted."""
         cfg = get_approved_research_config(

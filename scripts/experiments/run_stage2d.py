@@ -352,7 +352,7 @@ def run_stage2d_benchmarks(num_rounds: int = 3, seed: int = 42, output_filename:
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(benchmark_results, f, indent=2)
 
-    print(f"\n" + "=" * 80)
+    print("\n" + "=" * 80)
     print(f"✅ STAGE 2D BENCHMARKS COMPLETE ({total_duration:.1f}s)")
     print(f"Results written to: {out_path}")
     print("=" * 80)

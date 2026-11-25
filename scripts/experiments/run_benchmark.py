@@ -24,7 +24,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from src.data.nsl_kdd import NSLKDDLoader
 from src.data.partitioner import FederatedPartitioner
-from src.models.ids_net import IDSNet
 from src.federated.client import FederatedClient
 from src.federated.server import FederatedServer
 from src.attacks.model_poisoning import apply_gaussian_noise_attack, apply_sign_flipping_attack

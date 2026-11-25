@@ -6,6 +6,8 @@ quarantine thresholds, and shadow probation recovery.
 
 from typing import Dict, List, Any
 
+from src.config import validate_reputation_params
+
 
 class ReputationManager:
     """
@@ -15,6 +17,14 @@ class ReputationManager:
     def __init__(self, client_ids: List[int], initial_reputation: float = 1.0,
                  reward_delta: float = 0.05, slash_delta: float = 0.35,
                  quarantine_threshold: float = 0.40, probation_rounds: int = 3):
+        validate_reputation_params(
+            client_ids=client_ids,
+            initial_reputation=initial_reputation,
+            reward_delta=reward_delta,
+            slash_delta=slash_delta,
+            quarantine_threshold=quarantine_threshold,
+            probation_rounds=probation_rounds,
+        )
         self.reward_delta = reward_delta
         self.slash_delta = slash_delta
         self.quarantine_threshold = quarantine_threshold

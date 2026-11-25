@@ -22,6 +22,7 @@ import copy
 import math
 import unittest
 import numpy as np
+import pytest
 import torch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -46,6 +47,7 @@ from src.trust.evaluator import MultiCriteriaTrustEngine, PrivacyAwareTrustEngin
 from src.attacks.model_poisoning import apply_model_scaling_attack
 
 
+@pytest.mark.integration
 class TestEndToEndPipeline(unittest.TestCase):
     """Unified integration test verifying the complete FL-DP-Trust-Blockchain lifecycle."""
 

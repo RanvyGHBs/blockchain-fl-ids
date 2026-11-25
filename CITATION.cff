@@ -3,19 +3,18 @@ message: "If you use this software or reference its experimental simulation resu
 type: software
 title: "Blockchain-Assisted Privacy-Preserving Federated Learning for Network Intrusion Detection with Trust-Based Security and Cryptographic Auditing"
 abstract: >-
-  A Python-based research simulation platform integrating federated learning (five
-  simulated clients with Non-IID Dirichlet partitioning), client-level differential
-  privacy (OS-CSPRNG Gaussian noise and Renyi Differential Privacy accounting),
+  A Python-based research simulation platform for network intrusion detection on
+  NSL-KDD, integrating single-process federated learning (five simulated clients
+  with Non-IID Dirichlet partitioning), client-level differential privacy
+  (OS-CSPRNG Gaussian perturbation and Renyi Differential Privacy accounting),
   privacy-aware multi-criteria trust calibration against Byzantine poisoning, a
   locally simulated tamper-evident SHA-256 and ECDSA audit ledger, and an
-  interactive Streamlit dashboard for network intrusion detection on NSL-KDD.
+  interactive Streamlit dashboard.
 repository-code: "https://github.com/RanvyGHBs/blockchain-fl-ids"
 url: "https://github.com/RanvyGHBs/blockchain-fl-ids"
 authors:
-  - family-names: "<AUTHOR_FAMILY_NAME>"
-    given-names: "<AUTHOR_GIVEN_NAME>"
-    affiliation: "<INSTITUTION_OR_UNIVERSITY>"
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: "Thakur"
+    given-names: "Ranveer Singh"
 keywords:
   - federated-learning
   - differential-privacy
@@ -25,6 +24,3 @@ keywords:
   - cybersecurity
   - streamlit
   - machine-learning
-# date-released: "YYYY-MM-DD"
-# version: "1.0.0"
-# license: "<CHOSEN_LICENSE_SPDX_ID>"  # Add once a root LICENSE file is committed

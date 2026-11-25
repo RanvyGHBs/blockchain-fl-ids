@@ -277,7 +277,7 @@ blockchain-fl-ids/
 - **Statistical Power ($N = 5$ Seeds):** Honest FPR reduction is statistically significant ($p < 10^{-5}$), whereas test accuracy improvements across 5 seeds do not pass Holm-Bonferroni significance at $\alpha = 0.05$.
 - **Telemetry Exposure:** Validation losses logged on ledger transactions satisfy client DP by post-processing, but could leak signal about `D_val` in an external public ledger deployment.
 - **Domain & Privacy Scope:** Evaluated primarily on tabular NSL-KDD records (`122` features); approved privacy budget ($\epsilon = 13.2565$ across $T = 5$ rounds) protects client datasets under replace-one adjacency without client subsampling.
-- **License Status Pending:** No root `LICENSE` file is currently present in the repository; licensing terms await repository owner selection prior to release.
+- **No Software License Granted:** No software license is granted for this repository and all rights are reserved by copyright holder Ranveer Singh Thakur; while GitHub public visibility allows viewing and forking, no permission is granted to use, modify, or redistribute the software without explicit permission.
 
 ---
 
@@ -308,7 +308,7 @@ blockchain-fl-ids/
 8. **Fung et al. (2022):** *Mitigating Sybils in Federated Learning Poisoning (FoolsGold).* IEEE TDSC.
 
 ### Citing This Software
-Citation metadata is provided in [`CITATION.cff`](CITATION.cff) (author and release placeholders should be completed by the repository maintainer before formal release).
+Citation metadata is provided in [`CITATION.cff`](CITATION.cff).
 
 ### License
-No root `LICENSE` file has been added to this repository yet. Please review or add a root `LICENSE` file before redistributing or tagging an official release.
+No software license is granted for this repository. All rights are reserved, and copyright remains with **Ranveer Singh Thakur**. Public visibility on GitHub permits viewing and forking under GitHub's Terms of Service, but does not grant any right to use, copy, modify, or distribute this software without explicit written permission from the copyright holder.

@@ -14,7 +14,7 @@ Scenarios:
 
 Usage:
     cd blockchain-fl-ids
-    python run_stage2.py
+    python scripts/experiments/run_stage2.py
 """
 
 import os
@@ -25,7 +25,7 @@ import numpy as np
 import torch
 
 # Allow running from project root
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.data.nsl_kdd import NSLKDDLoader
 from src.federated.orchestrator import FederatedOrchestrator

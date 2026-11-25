@@ -27,3 +27,8 @@ Thumbs.db
 
 # Academic Submission Report (Excluded from Git)
 submission_report/
+
+# Local IDE & Scratch Workspaces
+.vscode/
+scratch/
+

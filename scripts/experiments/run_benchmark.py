@@ -12,11 +12,15 @@ All metrics are computed from actual PyTorch execution and saved to data/process
 """
 
 import os
+import sys
 import json
 import time
 from typing import Dict, List, Any, Tuple
 import numpy as np
 import torch
+
+# Allow running directly via python scripts/experiments/run_benchmark.py
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.data.nsl_kdd import NSLKDDLoader
 from src.data.partitioner import FederatedPartitioner

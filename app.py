@@ -1063,7 +1063,7 @@ elif section == "📊 5. Research Intelligence":
         st.markdown("---")
         render_wp4_overhead_dashboard()
     else:
-        st.warning("Benchmark results file (stage2_results.json) not found. Run `python run_stage2.py` to generate complete data.")
+        st.warning("Benchmark results file (stage2_results.json) not found. Run `python scripts/experiments/run_stage2.py` to generate complete data.")
 
     st.markdown("---")
 

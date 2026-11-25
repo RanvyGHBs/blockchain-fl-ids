@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software or reference its experimental simulation results, please cite it as below."
+type: software
+title: "Blockchain-Assisted Privacy-Preserving Federated Learning for Network Intrusion Detection with Trust-Based Security and Cryptographic Auditing"
+abstract: >-
+  A Python-based research simulation platform integrating federated learning (five
+  simulated clients with Non-IID Dirichlet partitioning), client-level differential
+  privacy (OS-CSPRNG Gaussian noise and Renyi Differential Privacy accounting),
+  privacy-aware multi-criteria trust calibration against Byzantine poisoning, a
+  locally simulated tamper-evident SHA-256 and ECDSA audit ledger, and an
+  interactive Streamlit dashboard for network intrusion detection on NSL-KDD.
+repository-code: "https://github.com/RanvyGHBs/blockchain-fl-ids"
+url: "https://github.com/RanvyGHBs/blockchain-fl-ids"
+authors:
+  - family-names: "<AUTHOR_FAMILY_NAME>"
+    given-names: "<AUTHOR_GIVEN_NAME>"
+    affiliation: "<INSTITUTION_OR_UNIVERSITY>"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+keywords:
+  - federated-learning
+  - differential-privacy
+  - intrusion-detection
+  - pytorch
+  - blockchain
+  - cybersecurity
+  - streamlit
+  - machine-learning
+# date-released: "YYYY-MM-DD"
+# version: "1.0.0"
+# license: "<CHOSEN_LICENSE_SPDX_ID>"  # Add once a root LICENSE file is committed

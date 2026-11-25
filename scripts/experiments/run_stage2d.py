@@ -17,12 +17,16 @@ Preserves data/processed/stage2_results.json and historical multi_attack_benchma
 """
 
 import os
+import sys
 import json
 import time
 import random
 from typing import Dict, Any
 import numpy as np
 import torch
+
+# Allow running directly via python scripts/experiments/run_stage2d.py
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.data.nsl_kdd import NSLKDDLoader
 from src.federated.orchestrator import FederatedOrchestrator

@@ -18,7 +18,7 @@ import torch
 from src.models.ids_net import IDSNet
 from src.evaluation.overhead_profiler import OverheadProfiler
 from src.blockchain.audit_verifier import SyntheticTamperSuite, AuditVerifier
-from run_stage2e_wp4 import build_sample_pristine_chain
+from scripts.experiments.run_stage2e_wp4 import build_sample_pristine_chain
 
 
 class TestSerializationByteAccounting:

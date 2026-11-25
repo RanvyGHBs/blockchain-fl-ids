@@ -237,8 +237,8 @@ class TestStage2D2IntegrityHardening(unittest.TestCase):
     # -------------------------------------------------------------------------
 
     def test_05_matched_benchmark_controls_integrity(self):
-        """Verifies matched control pairs S2/S2b/S3, S4/S4b/S5, S6/S6b/S7 in run_stage2d.py."""
-        from run_stage2d import run_stage2d_benchmarks
+        """Verifies matched control pairs S2/S2b/S3, S4/S4b/S5, S6/S6b/S7 in scripts/experiments/run_stage2d.py."""
+        from scripts.experiments.run_stage2d import run_stage2d_benchmarks
         import inspect
 
         # Inspect source code of run_stage2d to verify matched scenarios

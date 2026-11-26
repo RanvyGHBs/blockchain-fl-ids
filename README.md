@@ -8,7 +8,8 @@
 [![Audit Registry](https://img.shields.io/badge/Artifacts-25%20SHA--256%20Frozen-teal.svg)](reports/FINAL_RESEARCH_ARTIFACT_CHECKSUM_REGISTRY.md)
 
 ---
-
+## Presentation Link
+https://docs.google.com/presentation/d/1uhS8x7S-Yq-xiJvLCV6JPYFcCnSY0WJ0/edit?usp=sharing&ouid=109645093451430669908&rtpof=true&sd=true
 ## Project Overview
 
 This project is a Python-based research simulation that combines **Federated Learning**, **Differential Privacy**, **trust-based security**, and **cryptographic auditing** for **Network Intrusion Detection**.
